@@ -1,0 +1,31 @@
+
+
+% Bibstyle aea.bst version 2009.05.20
+
+\begin{thebibliography}{xx}
+
+\harvarditem[Duvivier]{Chlo{\'e}
+  Duvivier}{2013}{duvivierDoesUrbanProximity2013}
+{\bf Duvivier, Chlo{\'e}.} 2013. ``Does Urban Proximity Enhance Technical
+  Efficiency? {{Evidence}} from Chinese Agriculture.'' {\em Journal of Regional
+  Science}, 53(5):~923--943.
+
+\harvarditem[Howell]{Anthony Howell}{2020}{howellMinimumWageImpacts2020}
+{\bf Howell, Anthony.} 2020. ``Minimum Wage Impacts on Han-Minority Workers'
+  Wage Distribution and Inequality in Urban China.'' {\em Journal of Urban
+  Economics}, 115:~103184.
+
+\harvarditem[Jiang, Eaton \harvardand\ Kostka]{Xinhui Jiang, Sarah Eaton
+  \harvardand\ Genia Kostka}{2023}{jiangNoCountyIsland2023}
+{\bf Jiang, Xinhui, Sarah Eaton, and Genia Kostka.} 2023. ``No County Is an
+  Island: The Rise of Interjurisdictional Cooperation among Counties in
+  {{China}}.'' {\em Regional Studies}, 57(10):~2021--2036.
+
+\harvarditem[Zhao et~al.]{Aidong Zhao, Huub Ploegmakers, Jan Rouwendal
+  \harvardand\ Xianlei Ma}{2025}{zhaoLandInvestmentRegulation2025}
+{\bf Zhao, Aidong, Huub Ploegmakers, Jan Rouwendal, and Xianlei Ma.} 2025.
+  ``Land Investment Regulation and Allocative Efficiency: Evidence from the
+  Chinese Manufacturing Sector.'' {\em Journal of Economic Geography},
+  25(2):~151--174.
+
+\end{thebibliography}

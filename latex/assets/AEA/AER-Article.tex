@@ -1,0 +1,142 @@
+% AER-Article.tex for AEA last revised 24 July 2025
+\documentclass[AER]{AEA}   
+% 使用 AEA.cls 类文件，选项是 AER，按 American Economic Review 的版式来排。
+
+% 说明：你可以用 harvard 或 natbib 这两个引用包之一来配合 bibtex，但不能同时用。
+
+% Uncomment the next line to use the natbib package with bibtex 
+\usepackage{natbib}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\newcommand{\sym}[1]{\ensuremath{^{#1}}}
+% Uncomment the next line to use the harvard package with bibtex
+%\usepackage[abbr]{harvard}
+
+% 注释说明：控制草稿模式下的行间距。
+% 把行距设为 1.5 倍，接近「双倍行距」。
+\draftSpacing{1.5}
+
+\begin{document}
+
+\title{Title}                              %文章正式标题，出现在封面和页面顶部合适位置。
+\shortTitle{Short title for running head}  %页眉（running head）用的短标题，一般在每页顶部。
+\author{Guiwang Ling and Xi Tian
+	   \thanks{Guiwang Ling: College of Economics and Management, Nanjing Agricultural University, Nanjing, 210095, China (lingguiwang@yeah.net); 
+               Xi Tian: College of Economics and Management, Nanjing Agricultural University, Nanjing, 210095, China (tian@njau.edu.cn). Acknowledgements}}
+\date{\today}   %日期，\today 自动变成编译那天的日期。投稿时可以改成固定版本，比如\date{September 2025}。
+\pubMonth{Month}
+\pubYear{Year}
+\pubVolume{Vol}
+\pubIssue{Issue}
+
+\begin{abstract}         % 要求摘要 100–150 词左右，简要说明问题、方法、主要结果
+Your abstract here.
+\end{abstract}
+
+
+\maketitle               % 真正生成标题页、作者、摘要等内容的命令。
+
+American Economic Review Pointers:   % 正文普通文本内容
+
+\begin{enumerate}
+	\item \citet{duvivierDoesUrbanProximity2013} shows that ...
+	\item The article shows that ... \citep{duvivierDoesUrbanProximity2013}. 
+	\item \citet{duvivierDoesUrbanProximity2013} and \citet{howellMinimumWageImpacts2020} show that ...
+	\item The article shows that ... \citep{duvivierDoesUrbanProximity2013,howellMinimumWageImpacts2020}.
+	\item \citet{duvivierDoesUrbanProximity2013}, \citet{howellMinimumWageImpacts2020}, \citet{jiangNoCountyIsland2023} and \citet{zhaoLandInvestmentRegulation2025} show that ...
+	\item The article shows that ... \citep{duvivierDoesUrbanProximity2013,howellMinimumWageImpacts2020,jiangNoCountyIsland2023,zhaoLandInvestmentRegulation2025}.
+\end{enumerate}
+
+
+
+\begin{itemize}          % 无序列表
+\item Do not use an "Introduction" heading. Begin your introductory material
+before the first section heading.
+
+\item Avoid style markup (except sparingly for emphasis).
+
+\item Avoid using explicit vertical or horizontal space.
+
+\item Captions are short and go below figures but above tables.
+
+\item The tablenotes or figurenotes environments may be used below tables
+or figures, respectively, as demonstrated below.
+
+\item If you are using an appendix, it goes last, after the bibliography.
+Use regular section headings to make the appendix headings.
+
+\item If you are not using an appendix, you may delete the appendix command
+and sample appendix section heading.
+
+\item Either the natbib package or the harvard package may be used with bibtex.
+To include one of these packages, uncomment the appropriate usepackage command
+above. Note: you can't use both packages at once or compile-time errors will result.
+
+\end{itemize}
+
+\section{First Section in Body}  %定义第一个节标题：“First Section in Body”。
+
+Sample figure:
+
+\begin{figure}
+Figure here.
+
+\caption{Caption for figure below.}
+\begin{figurenotes}
+Figure notes without optional leadin.
+\end{figurenotes}
+\begin{figurenotes}[Source]
+Figure notes with optional leadin (Source, in this case).
+\end{figurenotes}
+\end{figure}
+
+\section{Second Section in Body}
+
+Sample table:
+
+\begin{table}
+\caption{Caption for table above.}
+
+\begin{tabular}{lcccc}}
+\toprule
+          &     mean&       sd&      min&      max\\
+\midrule
+ln\_wage   & 1.756917& .4668151&        0& 5.263916\\
+wage      & 6.500769& 3.824287&        1& 193.2367\\
+grade     & 12.77126& 2.370094&        0&       18\\
+ttl\_exp   & 7.747598& 4.578964&        0& 28.88461\\
+ttl\_exp\_sq& 80.99108& 86.89802&        0&  834.321\\
+tenure    & 3.969019& 4.121312&        0& 25.91667\\
+tenure\_sq & 32.73743& 63.50515&        0& 671.6736\\
+age       &   31.391& 6.176402&       18&       45\\
+south     & .4143926& .4926298&        0&        1\\
+union     & .2351175& .4240834&        0&        1\\
+smsa      & .7173111& .4503183&        0&        1\\
+msp       & .6199031& .4854232&        0&        1\\
+black     & .2826889& .4503183&        0&        1\\
+\midrule
+\(N\)     &    18982&         &         &         \\
+\bottomrule
+\end{tabular}
+
+\begin{tablenotes}
+Table notes environment without optional leadin.
+\end{tablenotes}
+\begin{tablenotes}[Source]
+Table notes environment with optional leadin (Source, in this case).
+\end{tablenotes}
+\end{table}
+
+References here (manual or bibTeX ). If you are using bibTeX, add your bib file 
+name in place of BibFile in the bibliography command.
+% Remove or comment out the next two lines if you are not using bibtex.
+\bibliographystyle{aea}
+\bibliography{refrence.bib}
+
+% The appendix command is issued once, prior to all appendices, if any.
+\appendix
+
+\section{Appendix}
+
+\end{document}
+

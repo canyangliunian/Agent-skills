@@ -1,0 +1,17 @@
+[1/6] Baseline
+opencode: /Users/lingguiwang/.opencode/bin/opencode
+1.1.49
+[2/6] Backup configs
+DRY: cp -a /Users/lingguiwang/.config/opencode/opencode.json /Users/lingguiwang/Documents/Coding/LLM/Skills/oh-my-opencode-update/plan/run_20260203_205511/opencode.json.20260203_205511.bak
+DRY: cp -a /Users/lingguiwang/.config/opencode/oh-my-opencode.json /Users/lingguiwang/Documents/Coding/LLM/Skills/oh-my-opencode-update/plan/run_20260203_205511/oh-my-opencode.json.20260203_205511.bak
+[3/6] Uninstall (gentle)
+DRY: (cd /Users/lingguiwang/.config/opencode && bun remove oh-my-opencode && bun install)
+[4/6] Cache cleanup (optional)
+Found cache dir: /Users/lingguiwang/.cache/oh-my-opencode
+DRY: rm -rf /Users/lingguiwang/.cache/oh-my-opencode (would ask confirmation)
+[5/6] Install/Upgrade
+DRY: (cd /Users/lingguiwang/.config/opencode && bun add oh-my-opencode@latest)
+[6/6] Verify
+DRY: node /Users/lingguiwang/.config/opencode/node_modules/.bin/oh-my-opencode --version
+DRY: node /Users/lingguiwang/.config/opencode/node_modules/.bin/oh-my-opencode doctor
+Done. Logs: /Users/lingguiwang/Documents/Coding/LLM/Skills/oh-my-opencode-update/plan/run_20260203_205511
