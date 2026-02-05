@@ -11,4 +11,4 @@
 ## 3. Verification
 
 - [x] 3.1 运行 `python3 scripts/ajg_fetch.py -h` 并核对 `references/ajg_fetch.md` 中参数一致
-- [x] 3.2 运行 `python3 scripts/abs_journal_recommend.py -h` 并核对 `references/abs_journal_recommend.md` 中参数一致
+- [x] 3.2 运行 `python3 scripts/abs_journal.py recommend -h` 并核对 `references/abs_journal_recommend.md` 中参数一致

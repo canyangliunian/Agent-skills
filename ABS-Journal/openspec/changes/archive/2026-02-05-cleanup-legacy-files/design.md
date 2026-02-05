@@ -1,6 +1,6 @@
 ## Context
 
-仓库当前已按 `ABS-Journal` skill 形态完成核心能力落地：抓取脚本在 `scripts/ajg_fetch.py`，推荐脚本实现与入口在 `scripts/abs_article_impl.py`、`scripts/abs_journal_recommend.py` / `scripts/abs_journal.py`，并通过 `SKILL.md` 明确“默认本地推荐、显式更新才抓取”。
+仓库当前已按 `ABS-Journal` skill 形态完成核心能力落地：抓取脚本在 `scripts/ajg_fetch.py`，推荐实现与入口在 `scripts/abs_article_impl.py` / `scripts/abs_journal.py`（混合模式：候选池 → AI 二次筛选 → 子集校验 → 固定列报告），并通过 `SKILL.md` 明确“默认本地推荐、显式更新才抓取”。
 
 但仍存在两类“新版本不需要的旧内容”：
 1) 资源位置不统一：本地 AJG 数据目前在 `data/`，而本 skill 的资源承载目录应为 `assets/`（便于打包、分发与示例管理）。
@@ -31,7 +31,7 @@
 - 备选方案：直接把 `data/` 改名为 `assets/`。不采用，会污染 assets 语义且不利于区分示例资产与数据资产。
 
 2) **删除脚本的判定依据：是否被当前 skill 入口引用**
-- 决策：以 `SKILL.md`、`README.md`、以及入口脚本（`scripts/abs_journal.py`、`scripts/abs_journal_recommend.py`）为“引用源”，凡未被引用且不属于必要的底层实现/校验工具，列入“候选删除清单”。
+- 决策：以 `SKILL.md`、`README.md`、以及入口脚本（`scripts/abs_journal.py`）为“引用源”，凡未被引用且不属于必要的底层实现/校验工具，列入“候选删除清单”。
 - 理由：严格以功能为准，避免主观误删。
 - 规则：任何候选删除必须先输出清单并获得确认后执行（遵守破坏性操作确认要求）。
 
@@ -46,4 +46,3 @@
 - [硬编码绝对路径导致迁移后失效] → 全库搜索 `/Users/lingguiwang/Documents/Coding/LLM/09ABS/data` 并统一替换为新路径；同时保留 `--data_dir/--ajg_csv` 参数覆盖能力。
 - [误删脚本导致功能回归] → 先给出“候选删除清单 + 引用证据”，确认后再删；删除后立即运行冒烟验证。
 - [迁移数据文件较大导致操作耗时] → 采用原地移动（同一磁盘）并在迁移前后核对文件数量与关键文件存在性。
-

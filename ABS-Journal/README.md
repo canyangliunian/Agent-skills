@@ -71,13 +71,18 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/09ABS/scripts/ajg_verify_outputs
 
 示例输出见：`assets/recommendation_example.md`。
 
-推荐脚本（示例，绝对路径）：
+推荐脚本（混合模式示例，绝对路径；不联网）：
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/09ABS/scripts/abs_journal_recommend.py \
+python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+  recommend \
   --title "你的论文标题" \
   --abstract "你的论文摘要（可选）" \
-  --mode easy
+  --mode fit \
+  --topk 10 \
+  --rating_filter "1,2,3" \
+  --hybrid \
+  --export_candidate_pool_json "/tmp/candidate_pool_fit.json"
 ```
 
 ## OpenSpec

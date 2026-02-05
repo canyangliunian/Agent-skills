@@ -59,6 +59,31 @@ def main() -> int:
     ap_rec.add_argument("--field", default="ECON", help="论文领域（默认ECON）")
     ap_rec.add_argument("--mode", default="easy", choices=["easy", "fit", "value"], help="推荐模式")
     ap_rec.add_argument("--topk", type=int, default=20, help="输出期刊数")
+    ap_rec.add_argument(
+        "--export_candidate_pool_json",
+        default="",
+        help="导出候选池 JSON（用于 AI 二次筛选）。为空则不导出。绝对路径推荐。",
+    )
+    ap_rec.add_argument(
+        "--hybrid",
+        action="store_true",
+        help="启用混合流程：脚本导出候选池 JSON，然后由 AI（人工/外部）在候选池内二次筛选；本脚本不调用外部 API。",
+    )
+    ap_rec.add_argument(
+        "--ai_output_json",
+        default="",
+        help="AI 二次筛选输出 JSON（绝对路径）。仅在 --hybrid 时使用。",
+    )
+    ap_rec.add_argument(
+        "--hybrid_report_md",
+        default="",
+        help="混合流程最终报告 Markdown 输出路径（绝对路径）。需同时提供 --ai_output_json。",
+    )
+    ap_rec.add_argument(
+        "--rating_filter",
+        default="",
+        help="AJG/ABS 星级过滤（逗号分隔，如: 1,2,3 或 3,4,4*）。为空则不过滤。",
+    )
 
     ap_up = sub.add_parser("update", help="更新AJG数据库（需要 env: AJG_EMAIL/AJG_PASSWORD）")
     ap_up.add_argument(
@@ -93,6 +118,10 @@ def main() -> int:
         # Default local file in this repo. If you updated to a newer year,
         # pass --ajg_csv explicitly via direct call to abs_article_impl.py,
         # or update this mapping later.
+        export_json = os.path.abspath(args.export_candidate_pool_json) if args.export_candidate_pool_json else ""
+        if args.hybrid and not export_json:
+            raise RuntimeError("--hybrid 需要同时提供 --export_candidate_pool_json（候选池 JSON 输出路径）")
+
         rec_args = [
             "--ajg_csv",
             os.path.join(data_dir, "ajg_2024_journals_core_custom.csv"),
@@ -106,8 +135,66 @@ def main() -> int:
             args.mode,
             "--topk",
             str(args.topk),
+            "--export_candidate_pool_json",
+            export_json,
+            "--rating_filter",
+            args.rating_filter,
         ]
-        return run_py("scripts/abs_article_impl.py", rec_args)
+        returncode = run_py("scripts/abs_article_impl.py", rec_args)
+        if returncode != 0:
+            return returncode
+
+        if not args.hybrid:
+            return 0
+
+        # Validate AI output (manual step) if provided.
+        if args.ai_output_json:
+            returncode = run_py(
+                "scripts/abs_ai_review.py",
+                [
+                    "--candidate_pool_json",
+                    export_json,
+                    "--ai_output_json",
+                    os.path.abspath(args.ai_output_json),
+                ],
+            )
+            if returncode != 0:
+                return returncode
+
+            if args.hybrid_report_md:
+                out_md = os.path.abspath(args.hybrid_report_md)
+                if not os.path.isabs(out_md):
+                    raise RuntimeError("--hybrid_report_md 必须是绝对路径")
+                os.makedirs(os.path.dirname(out_md) or ".", exist_ok=True)
+                import subprocess
+
+                proc = subprocess.run(
+                    [
+                        sys.executable,
+                        os.path.join(SKILL_ROOT, "scripts", "hybrid_report.py"),
+                        "--candidate_pool_json",
+                        export_json,
+                        "--ai_output_json",
+                        os.path.abspath(args.ai_output_json),
+                        "--topk",
+                        str(args.topk),
+                    ],
+                    capture_output=True,
+                    text=True,
+                )
+                if proc.returncode != 0:
+                    print(proc.stdout, end="")
+                    print(proc.stderr, end="", file=sys.stderr)
+                    return int(proc.returncode)
+                with open(out_md, "w", encoding="utf-8") as f:
+                    f.write(proc.stdout)
+                print(f"已写入混合流程报告：{out_md}")
+            return 0
+
+        print("")
+        print("已生成候选池 JSON。下一步：将候选池提供给 AI 二次筛选，并保存 AI 输出为 JSON，然后用 --ai_output_json 校验。")
+        print(f"- 候选池：{export_json}")
+        return 0
 
     raise RuntimeError(f"unknown cmd: {args.cmd}")
 

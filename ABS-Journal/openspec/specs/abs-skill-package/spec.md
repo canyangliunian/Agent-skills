@@ -18,7 +18,7 @@ TBD - created by archiving change skillize-ajg-and-recommendation. Update Purpos
 系统 SHALL 保持 `SKILL.md` 精简，只包含触发条件与最小工作流，并将较重的字段说明/FAQ/脚本参数细节放入 `references/` 或 `assets/`，并在 `SKILL.md` 中以链接方式引用。
 
 #### Scenario: Script-specific docs live in references
-- **WHEN** 需要指导用户如何使用 `scripts/ajg_fetch.py` 或 `scripts/abs_journal_recommend.py`
+- **WHEN** 需要指导用户如何使用 `scripts/ajg_fetch.py` 或混合模式推荐入口 `scripts/abs_journal.py`
 - **THEN** 系统 MUST 在 `references/` 下提供对应的脚本说明文档，并在 `SKILL.md` 的 References 区域引用它们
 
 ### Requirement: Default recommendation uses local AJG data
@@ -39,10 +39,9 @@ TBD - created by archiving change skillize-ajg-and-recommendation. Update Purpos
 系统 MUST 保证该 skill 包可被复制或移动到任意目录后仍可运行：脚本内部不得依赖某个固定工程根目录的硬编码绝对路径来定位同包脚本与 `assets/` 资源。
 
 #### Scenario: Entrypoints infer skill root from __file__
-- **WHEN** 用户以任意当前工作目录（CWD）运行 `scripts/abs_journal.py`、`scripts/abs_journal_recommend.py` 或 `scripts/ajg_fetch.py`
+- **WHEN** 用户以任意当前工作目录（CWD）运行 `scripts/abs_journal.py` 或 `scripts/ajg_fetch.py`
 - **THEN** 脚本 MUST 基于 `__file__` 推断 skill 根目录，并据此定位同包脚本与默认 `assets/data/` 位置
 
 #### Scenario: Docs use the delivered absolute path by default
 - **WHEN** 用户复制 `SKILL.md` 或 `references/` 中的示例命令执行
 - **THEN** 示例命令 MUST 指向实际交付目录（例如 `~/.agents/skills/abs-journal` 的绝对路径），不得指向历史旧工程目录
-

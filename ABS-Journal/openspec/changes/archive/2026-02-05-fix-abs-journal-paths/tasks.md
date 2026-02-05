@@ -13,7 +13,7 @@
 ## 3. Script Relocatability (No Hard-coded Roots)
 
 - [x] 3.1 将 `scripts/abs_journal.py` 中的根目录定位改为基于 `__file__` 推断 `SKILL_ROOT`，并确保 `--data_dir` 默认指向 `SKILL_ROOT/assets/data`
-- [x] 3.2 将 `scripts/abs_journal_recommend.py` 的实现脚本定位改为基于 `__file__` 推断 `SKILL_ROOT`
+- [x] 3.2 将推荐入口脚本定位改为基于 `__file__` 推断 `SKILL_ROOT`（以 `scripts/abs_journal.py` 为主）
 - [x] 3.3 将 `scripts/abs_article_impl.py` 的 `DEFAULT_AJG_CSV` 改为 `SKILL_ROOT/assets/data/...`，避免固定工程路径
 
 ## 4. Fetch Logging Location
@@ -22,5 +22,5 @@
 
 ## 5. Minimal Verification
 
-- [x] 5.1 运行 `python3 scripts/abs_journal.py -h`、`python3 scripts/abs_journal_recommend.py -h`、`python3 scripts/ajg_fetch.py -h`、`python3 scripts/abs_article_impl.py -h` 确认入口可用
+- [x] 5.1 运行 `python3 scripts/abs_journal.py -h`、`python3 scripts/ajg_fetch.py -h`、`python3 scripts/abs_article_impl.py -h` 确认入口可用
 - [x] 5.2 运行一次本地推荐（例如 `python3 scripts/abs_article_impl.py --title "test" --topk 1`）确认默认数据路径可读取且能输出结果

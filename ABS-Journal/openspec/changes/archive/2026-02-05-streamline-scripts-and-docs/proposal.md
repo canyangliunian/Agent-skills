@@ -5,7 +5,7 @@
 ## What Changes
 
 - 明确脚本分层：
-  - **核心入口**：`scripts/ajg_fetch.py`（更新 AJG/ABS 数据库）、`scripts/abs_journal_recommend.py`（默认本地推荐）
+  - **核心入口**：`scripts/ajg_fetch.py`（更新 AJG/ABS 数据库）、`scripts/abs_journal.py`（混合模式推荐：候选池 → AI 二次筛选 → 校验 → 固定列报告）
   - **辅助但保留**：`scripts/abs_journal.py`（统一控制流入口）、`scripts/ajg_verify_outputs.py`（离线校验）、`scripts/abs_article_impl.py`（推荐实现）
 - 在 `references/` 下新增/完善两份核心入口的说明文档：
   - `references/ajg_fetch.md`：抓取脚本用法、envvars、输出文件、常见错误与排查
@@ -28,4 +28,3 @@
 
 - 影响文档：新增 `references/*.md`，并修改 `SKILL.md` 的 references 指向。
 - 不改变核心代码逻辑：不移除离线校验与统一入口脚本，仅做“入口明确 + 文档补齐”。
-

@@ -22,5 +22,5 @@
 ## Impact
 
 - 受影响文件类型：`SKILL.md`、`references/*.md`、`assets/*.md`、`scripts/*.py`。
-- 受影响代码路径：入口脚本（如 `scripts/abs_journal.py` / `scripts/abs_journal_recommend.py`）、推荐实现默认 CSV 路径（`scripts/abs_article_impl.py`）、抓取脚本日志输出（`scripts/ajg_fetch.py`）。
+- 受影响代码路径：入口脚本（如 `scripts/abs_journal.py`）、推荐实现默认 CSV 路径（`scripts/abs_article_impl.py`）、抓取脚本日志输出（`scripts/ajg_fetch.py`）。
 - 依赖/外部系统：无新增依赖；联网抓取行为仍由显式触发控制。

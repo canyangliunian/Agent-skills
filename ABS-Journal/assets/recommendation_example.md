@@ -12,10 +12,12 @@
 ## 使用方式
 
 ```bash
-python3 /Users/lingguiwang/.agents/skills/abs-journal/scripts/abs_journal_recommend.py \
+python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+  recommend \
   --field ECON \
-  --mode easy \
-  --topk 20 \
-  --title "Information, Beliefs and Support for Retaliatory Tariffs on US Agricultural Products: Evidence From a Randomised Controlled Trial in China" \
-  --abstract "<paste abstract>"
+  --mode fit \
+  --topk 10 \
+  --rating_filter "1,2,3" \
+  --hybrid \
+  --export_candidate_pool_json "/tmp/candidate_pool_fit.json"
 ```
