@@ -22,19 +22,19 @@ export AJG_EMAIL="lingguiwang@yeah.net"
 export AJG_PASSWORD="你的密码"
 ```
 
-## 用法（以绝对路径为默认）
+## 用法（相对路径；基准为项目根目录）
 
 先确认帮助信息（与脚本参数保持一致）：
 
 ```bash
-python3 /Users/lingguiwang/.agents/skills/abs-journal/scripts/ajg_fetch.py -h
+python3 scripts/ajg_fetch.py -h
 ```
 
 ### 推荐命令（写入 `assets/data/`）
 
 ```bash
-python3 /Users/lingguiwang/.agents/skills/abs-journal/scripts/ajg_fetch.py \
-  --outdir /Users/lingguiwang/.agents/skills/abs-journal/assets/data
+python3 scripts/ajg_fetch.py \
+  --outdir "$(pwd)/assets/data"
 ```
 
 ## 参数说明（与 `-h` 输出一致）
@@ -54,8 +54,8 @@ python3 /Users/lingguiwang/.agents/skills/abs-journal/scripts/ajg_fetch.py \
 若你希望在不联网的情况下确认抓取结果完整且结构正确，可运行离线校验脚本：
 
 ```bash
-python3 /Users/lingguiwang/.agents/skills/abs-journal/scripts/ajg_verify_outputs.py \
-  --outdir /Users/lingguiwang/.agents/skills/abs-journal/assets/data
+python3 scripts/ajg_verify_outputs.py \
+  --outdir "$(pwd)/assets/data"
 ```
 
 ## 常见错误与排查

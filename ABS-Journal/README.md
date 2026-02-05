@@ -25,18 +25,18 @@ export AJG_PASSWORD="你的密码"
 
 也可以参考示例文件：`scripts/ajg_config.example.env`。
 
-### 运行（绝对路径）
+### 运行（相对路径；基准为项目根目录）
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/09ABS/scripts/ajg_fetch.py \
-  --outdir /Users/lingguiwang/Documents/Coding/LLM/09ABS/assets/data
+python3 scripts/ajg_fetch.py \
+  --outdir "$(pwd)/assets/data"
 ```
 
 默认不覆盖既有输出文件；如需覆盖：
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/09ABS/scripts/ajg_fetch.py \
-  --outdir /Users/lingguiwang/Documents/Coding/LLM/09ABS/assets/data \
+python3 scripts/ajg_fetch.py \
+  --outdir "$(pwd)/assets/data" \
   --overwrite
 ```
 
@@ -60,21 +60,20 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/09ABS/scripts/ajg_fetch.py \
 ### 离线校验（不联网）
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/09ABS/scripts/ajg_verify_outputs.py \
-  --outdir /Users/lingguiwang/Documents/Coding/LLM/09ABS/assets/data
+python3 scripts/ajg_verify_outputs.py \
+  --outdir "$(pwd)/assets/data"
 ```
 
 ## 2. 投稿期刊推荐（skill：`ABS-Journal`）
 
-该推荐 **仅依赖本地 AJG CSV**（默认：
-`/Users/lingguiwang/Documents/Coding/LLM/09ABS/assets/data/ajg_2024_journals_core_custom.csv`），不访问外网。
+该推荐 **仅依赖本地 AJG CSV**（默认：`assets/data/ajg_2024_journals_core_custom.csv`），不访问外网。
 
 示例输出见：`assets/recommendation_example.md`。
 
-推荐脚本（混合模式示例，绝对路径；不联网）：
+推荐脚本（混合模式示例；不联网）：
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的论文摘要（可选）" \

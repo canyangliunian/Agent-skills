@@ -14,8 +14,8 @@ Inputs:
 Outputs:
 - a Markdown report to stdout
 
-Default AJG CSV (absolute path):
-  /Users/lingguiwang/.agents/skills/abs-journal/assets/data/ajg_2024_journals_core_custom.csv
+Default AJG CSV (portable absolute path at runtime):
+  <ABS_JOURNAL_DATA_DIR or ABS_JOURNAL_HOME>/assets/data/ajg_2024_journals_core_custom.csv
 """
 
 from __future__ import annotations
@@ -29,8 +29,14 @@ import re
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Optional
 
-SKILL_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-DEFAULT_AJG_CSV = os.path.join(SKILL_ROOT, "assets", "data", "ajg_2024_journals_core_custom.csv")
+from abs_paths import ajg_csv_default
+
+DEFAULT_AJG_CSV = str(ajg_csv_default("2024"))
+
+# Keep a skill root for resolving additional bundled assets (e.g., keyword lists).
+from abs_paths import skill_root as resolve_skill_root
+
+SKILL_ROOT = str(resolve_skill_root())
 
 
 ANSI_RESET = "\x1b[0m"

@@ -18,7 +18,7 @@ description: Use when a user asks to recommend target journals via a hybrid ABS/
 ### A) 推荐投稿期刊（混合模式，默认本地数据）
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
@@ -32,7 +32,7 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_j
 ### A2) 校验 AI 输出并生成最终报告（固定列三段 Top10）
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
@@ -51,8 +51,8 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_j
 export AJG_EMAIL="lingguiwang@yeah.net"
 export AJG_PASSWORD="你的密码"
 
-python3 /Users/lingguiwang/.agents/skills/abs-journal/scripts/ajg_fetch.py \
-  --outdir /Users/lingguiwang/.agents/skills/abs-journal/assets/data
+python3 scripts/ajg_fetch.py \
+  --outdir "$(pwd)/assets/data"
 ```
 
 ## Workflow

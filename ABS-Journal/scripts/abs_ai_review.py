@@ -7,14 +7,14 @@ This script does NOT call external APIs. It validates that an AI-produced select
 is strictly a subset of the candidate pool exported by abs_article_impl.py.
 
 Usage (example):
-  python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_article_impl.py \\
-    --ajg_csv /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/assets/data/ajg_2024_journals_core_custom.csv \\
+  python3 /ABS_JOURNAL_HOME/scripts/abs_article_impl.py \\
+    --ajg_csv /ABS_JOURNAL_HOME/assets/data/ajg_2024_journals_core_custom.csv \\
     --field ECON --profile general --mode fit --topk 200 \\
     --title \"...\" --abstract \"...\" \\
     --export_candidate_pool_json /tmp/candidate_pool.json
 
   # (You paste / generate AI output as JSON into /tmp/ai_output.json)
-  python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_ai_review.py \\
+  python3 /ABS_JOURNAL_HOME/scripts/abs_ai_review.py \\
     --candidate_pool_json /tmp/candidate_pool.json \\
     --ai_output_json /tmp/ai_output.json
 """

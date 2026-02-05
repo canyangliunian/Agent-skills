@@ -9,8 +9,8 @@ Design goals:
 - Fast, explicit failure messages for CI-like checks.
 
 Usage (absolute paths recommended):
-  python3 /Users/lingguiwang/.agents/skills/abs-journal/scripts/ajg_verify_outputs.py \
-    --outdir /Users/lingguiwang/.agents/skills/abs-journal/assets/data
+  python3 /ABS_JOURNAL_HOME/scripts/ajg_verify_outputs.py \
+    --outdir /ABS_JOURNAL_HOME/assets/data
 
 It checks:
 - Required files exist for the latest discovered year in the directory (by filename).

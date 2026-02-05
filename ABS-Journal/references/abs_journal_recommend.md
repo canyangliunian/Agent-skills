@@ -20,13 +20,13 @@
 先确认帮助信息（与脚本参数保持一致）：
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py recommend -h
+python3 scripts/abs_journal.py recommend -h
 ```
 
 ### 最常用：按主题匹配（fit）
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
@@ -39,7 +39,7 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_j
 按用户偏好限制 ABS/AJG 星级范围（逗号分隔，支持 `4*`）：
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
@@ -64,7 +64,7 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_j
 下面示例生成候选池，并把候选池写到一个 JSON 文件（绝对路径）：
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
@@ -78,7 +78,7 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_j
 你也可以分别为三类生成候选池（便于套用用户的星级约束，例如 fit=1/2/3、easy=1/2、value=3/4/4*）：
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
@@ -88,7 +88,7 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_j
   --hybrid \
   --export_candidate_pool_json "/tmp/candidate_pool_easy.json"
 
-python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
@@ -103,7 +103,7 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_j
 
 提示模板在：
 
-- `/Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/ai_second_pass_template.md`
+- `scripts/ai_second_pass_template.md`
 
 **硬约束**：AI 只能输出候选池中 `journal` 字段出现过的期刊名。
 
@@ -119,10 +119,10 @@ AI 输出 JSON 约定（必须包含三组且各 ≥ TopK=10）：
 }
 ```
 
-运行校验与报告生成（单次即可生成三模式固定列表格，仍然不联网）。相对路径基准：项目根 `/Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal`。
+运行校验与报告生成（单次即可生成三模式固定列表格，仍然不联网）。相对路径基准：项目根（即包含 `SKILL.md` 的目录）。
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
@@ -165,9 +165,7 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_j
 
 ## 数据依赖（默认从本地读取）
 
-默认推荐依赖本地数据文件（建议放在）：
-
-- `/Users/lingguiwang/.agents/skills/abs-journal/assets/data/ajg_2024_journals_core_custom.csv`
+默认推荐依赖本地数据文件（建议放在 `assets/data/`，例如 `assets/data/ajg_2024_journals_core_custom.csv`）。
 
 如果你想用其它年份/自定义 CSV，用 `--ajg_csv` 指定其绝对路径即可。
 

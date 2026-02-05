@@ -12,7 +12,7 @@
 ## 使用方式
 
 ```bash
-python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
+python3 scripts/abs_journal.py \
   recommend \
   --field ECON \
   --mode fit \

@@ -9,16 +9,16 @@ Default behavior:
 Only update when explicitly requested:
 - Pass --update to fetch the latest AJG dataset into --data_dir.
 
-Examples (absolute paths recommended):
+Examples (portable; absolute paths can be derived at runtime):
   # Recommend (default)
-  python3 /Users/lingguiwang/.agents/skills/abs-journal/scripts/abs_journal.py \\
+  python3 scripts/abs_journal.py \\
     recommend --title "..." --abstract "..." --mode fit
 
   # Update then recommend
   export AJG_EMAIL="lingguiwang@yeah.net"
   export AJG_PASSWORD="..."
-  python3 /Users/lingguiwang/.agents/skills/abs-journal/scripts/abs_journal.py \\
-    recommend --update --data_dir /Users/lingguiwang/.agents/skills/abs-journal/assets/data \\
+  python3 scripts/abs_journal.py \\
+    recommend --update --data_dir "$(pwd)/assets/data" \\
     --title "..." --abstract "..."
 """
 
@@ -29,8 +29,26 @@ import os
 import sys
 from typing import List
 
+from abs_paths import data_dir as default_data_dir
+from abs_paths import skill_root as resolve_skill_root
 
-SKILL_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+SKILL_ROOT = str(resolve_skill_root())
+
+DEFAULT_EXPORT_DIR = os.path.join(SKILL_ROOT, "assets")
+
+
+def resolve_inside_skill(path: str, *, base_dir: str) -> str:
+    """Resolve a user path so that relative paths land inside this skill.
+
+    - If `path` is absolute: keep as-is (user explicitly chose an external location).
+    - If `path` is relative: resolve under `base_dir` (which should be inside SKILL_ROOT).
+    """
+    if not path:
+        return ""
+    if os.path.isabs(path):
+        return os.path.abspath(path)
+    return os.path.abspath(os.path.join(base_dir, path))
 
 
 def run_py(script_rel: str, argv: List[str]) -> int:
@@ -51,7 +69,7 @@ def main() -> int:
     ap_rec.add_argument("--update", action="store_true", help="显式更新AJG数据库后再推荐（默认不更新）")
     ap_rec.add_argument(
         "--data_dir",
-        default=os.path.join(SKILL_ROOT, "assets", "data"),
+        default=str(default_data_dir()),
         help="AJG数据目录（绝对路径推荐）",
     )
     ap_rec.add_argument("--title", required=True, help="论文标题")
@@ -62,7 +80,7 @@ def main() -> int:
     ap_rec.add_argument(
         "--export_candidate_pool_json",
         default="",
-        help="导出候选池 JSON（用于 AI 二次筛选）。为空则不导出。绝对路径推荐。",
+        help="导出候选池 JSON（用于 AI 二次筛选）。为空则不导出。相对路径将写入本 skill 的 assets/ 下。",
     )
     ap_rec.add_argument(
         "--hybrid",
@@ -72,12 +90,12 @@ def main() -> int:
     ap_rec.add_argument(
         "--ai_output_json",
         default="",
-        help="AI 二次筛选输出 JSON（绝对路径）。仅在 --hybrid 时使用。",
+        help="AI 二次筛选输出 JSON（仅在 --hybrid 时使用）。相对路径将从本 skill 的 assets/ 下解析。",
     )
     ap_rec.add_argument(
         "--hybrid_report_md",
         default="",
-        help="混合流程最终报告 Markdown 输出路径（绝对路径）。需同时提供 --ai_output_json。",
+        help="混合流程最终报告 Markdown 输出路径。相对路径将写入本 skill 的 assets/ 下；需同时提供 --ai_output_json。",
     )
     ap_rec.add_argument(
         "--rating_filter",
@@ -88,7 +106,7 @@ def main() -> int:
     ap_up = sub.add_parser("update", help="更新AJG数据库（需要 env: AJG_EMAIL/AJG_PASSWORD）")
     ap_up.add_argument(
         "--data_dir",
-        default=os.path.join(SKILL_ROOT, "assets", "data"),
+        default=str(default_data_dir()),
         help="输出数据目录（绝对路径推荐）",
     )
     ap_up.add_argument("--overwrite", action="store_true", help="允许覆盖既有输出文件（默认不覆盖）")
@@ -118,7 +136,7 @@ def main() -> int:
         # Default local file in this repo. If you updated to a newer year,
         # pass --ajg_csv explicitly via direct call to abs_article_impl.py,
         # or update this mapping later.
-        export_json = os.path.abspath(args.export_candidate_pool_json) if args.export_candidate_pool_json else ""
+        export_json = resolve_inside_skill(args.export_candidate_pool_json, base_dir=DEFAULT_EXPORT_DIR) if args.export_candidate_pool_json else ""
         if args.hybrid and not export_json:
             raise RuntimeError("--hybrid 需要同时提供 --export_candidate_pool_json（候选池 JSON 输出路径）")
 
@@ -155,7 +173,7 @@ def main() -> int:
                     "--candidate_pool_json",
                     export_json,
                     "--ai_output_json",
-                    os.path.abspath(args.ai_output_json),
+                    resolve_inside_skill(args.ai_output_json, base_dir=DEFAULT_EXPORT_DIR),
                     "--topk",
                     str(args.topk),
                 ],
@@ -164,9 +182,7 @@ def main() -> int:
                 return returncode
 
             if args.hybrid_report_md:
-                out_md = os.path.abspath(args.hybrid_report_md)
-                if not os.path.isabs(out_md):
-                    raise RuntimeError("--hybrid_report_md 必须是绝对路径")
+                out_md = resolve_inside_skill(args.hybrid_report_md, base_dir=DEFAULT_EXPORT_DIR)
                 os.makedirs(os.path.dirname(out_md) or ".", exist_ok=True)
                 import subprocess
 
@@ -177,7 +193,7 @@ def main() -> int:
                         "--candidate_pool_json",
                         export_json,
                         "--ai_output_json",
-                        os.path.abspath(args.ai_output_json),
+                        resolve_inside_skill(args.ai_output_json, base_dir=DEFAULT_EXPORT_DIR),
                         "--topk",
                         str(args.topk),
                     ],

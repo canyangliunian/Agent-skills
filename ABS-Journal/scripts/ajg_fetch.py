@@ -11,8 +11,8 @@ Design goals:
 Usage:
   export AJG_EMAIL='...'
   export AJG_PASSWORD='...'
-  python3 /Users/lingguiwang/.agents/skills/abs-journal/scripts/ajg_fetch.py \
-    --outdir /Users/lingguiwang/.agents/skills/abs-journal/assets/data
+  python3 /ABS_JOURNAL_HOME/scripts/ajg_fetch.py \
+    --outdir /ABS_JOURNAL_HOME/assets/data
 
 Outputs:
 - ajg_<year>_journals_raw.jsonl
@@ -769,12 +769,10 @@ def append_progress(msg: str) -> None:
             f.write(f"- {ts} {msg}\n")
         return
     except Exception:
-        fallback = os.path.join("/tmp", "abs-journal-plan")
-        os.makedirs(fallback, exist_ok=True)
-        path = os.path.join(fallback, "progress.md")
-        ts = _dt.datetime.now().strftime("%H:%M")
-        with open(path, "a", encoding="utf-8") as f:
-            f.write(f"- {ts} {msg}\n")
+        # Hard constraint: keep artifacts inside this skill directory tree by default.
+        # If writing fails, we swallow the error to avoid breaking fetch, but do NOT
+        # write to /tmp or other external locations implicitly.
+        return
 
 
 def append_findings(msg: str) -> None:
@@ -787,11 +785,10 @@ def append_findings(msg: str) -> None:
             f.write(msg.rstrip() + "\n")
         return
     except Exception:
-        fallback = os.path.join("/tmp", "abs-journal-plan")
-        os.makedirs(fallback, exist_ok=True)
-        path = os.path.join(fallback, "findings.md")
-        with open(path, "a", encoding="utf-8") as f:
-            f.write(msg.rstrip() + "\n")
+        # Hard constraint: keep artifacts inside this skill directory tree by default.
+        # If writing fails, we swallow the error to avoid breaking fetch, but do NOT
+        # write to /tmp or other external locations implicitly.
+        return
 
 
 def mask_secret(s: str) -> str:

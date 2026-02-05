@@ -8,7 +8,7 @@
 - render final report (hybrid_report.py)
 
 Run:
-  python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/test_hybrid_flow.py
+  python3 /ABS_JOURNAL_HOME/scripts/test_hybrid_flow.py
 """
 
 from __future__ import annotations
@@ -91,18 +91,16 @@ def main() -> int:
         )
 
         j = pick_first(pool_path)
-        ai_obj = {
-            "fit": [{"journal": j, "topic": "mock topic"}],
-            "easy": [{"journal": j, "topic": "mock topic"}],
-            "value": [{"journal": j, "topic": "mock topic"}],
-        }
+        topk = 10
+        items = [{"journal": j, "topic": f"mock topic {i}"} for i in range(1, topk + 1)]
+        ai_obj = {"fit": items, "easy": items, "value": items}
         with open(ai_path, "w", encoding="utf-8") as f:
             json.dump(ai_obj, f, ensure_ascii=False, indent=2)
 
-        run([sys.executable, abs_ai_review, "--candidate_pool_json", pool_path, "--ai_output_json", ai_path])
+        run([sys.executable, abs_ai_review, "--candidate_pool_json", pool_path, "--ai_output_json", ai_path, "--topk", str(topk)])
 
         proc = subprocess.run(
-            [sys.executable, hybrid_report, "--candidate_pool_json", pool_path, "--ai_output_json", ai_path, "--topk", "10"],
+            [sys.executable, hybrid_report, "--candidate_pool_json", pool_path, "--ai_output_json", ai_path, "--topk", str(topk)],
             capture_output=True,
             text=True,
         )
@@ -122,4 +120,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

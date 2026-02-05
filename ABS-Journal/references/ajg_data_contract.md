@@ -17,8 +17,8 @@
 不联网校验（推荐）：
 
 ```bash
-python3 /Users/lingguiwang/.agents/skills/abs-journal/scripts/ajg_verify_outputs.py \
-  --outdir /Users/lingguiwang/.agents/skills/abs-journal/assets/data
+python3 scripts/ajg_verify_outputs.py \
+  --outdir "$(pwd)/assets/data"
 ```
 
 ## Notes
