@@ -156,6 +156,8 @@ def main() -> int:
                     export_json,
                     "--ai_output_json",
                     os.path.abspath(args.ai_output_json),
+                    "--topk",
+                    str(args.topk),
                 ],
             )
             if returncode != 0:

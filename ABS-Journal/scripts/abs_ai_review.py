@@ -36,13 +36,14 @@ def load_json(path: str) -> Dict[str, Any]:
         return json.load(f)
 
 
-def validate_subset(candidate_pool: Dict[str, Any], ai_output: Dict[str, Any]) -> List[str]:
-    # Support two shapes:
-    # A) Single pool: {"meta": ..., "candidates": [...]}
-    # B) Multi pools (recommended): {"fit": {...}, "easy": {...}, "value": {...}}
-    if any(k in candidate_pool for k in ["fit", "easy", "value"]):
+def validate_subset(candidate_pool: Dict[str, Any], ai_output: Dict[str, Any], topk: int) -> List[str]:
+    """Validate AI output against candidate pool with tri-mode requirements."""
+    modes = ["fit", "easy", "value"]
+
+    # Build allowed journals per mode (supports single-pool or per-mode pools)
+    if any(k in candidate_pool for k in modes):
         allowed_by_bucket: Dict[str, set] = {}
-        for bucket in ["fit", "easy", "value"]:
+        for bucket in modes:
             pool = candidate_pool.get(bucket) or {}
             cands = (pool.get("candidates") if isinstance(pool, dict) else []) or []
             s = {c.get("journal") for c in cands if isinstance(c, dict)}
@@ -52,14 +53,23 @@ def validate_subset(candidate_pool: Dict[str, Any], ai_output: Dict[str, Any]) -
         cands = candidate_pool.get("candidates") or []
         s = {c.get("journal") for c in cands if isinstance(c, dict)}
         s.discard(None)
-        allowed_by_bucket = {b: s for b in ["fit", "easy", "value"]}
+        allowed_by_bucket = {b: s for b in modes}
 
     errors: List[str] = []
-    for bucket in ["fit", "easy", "value"]:
+
+    # Mode presence
+    for bucket in modes:
+        if bucket not in ai_output:
+            errors.append(f"{bucket}: 缺少该模式输出")
+
+    # Per-mode validation
+    for bucket in modes:
         items = ai_output.get(bucket) or []
         if not isinstance(items, list):
             errors.append(f"{bucket}: 输出必须是 list")
             continue
+        if len(items) < topk:
+            errors.append(f"{bucket}: 数量不足 TopK={topk}，仅 {len(items)} 条")
         allowed = allowed_by_bucket.get(bucket) or set()
         for idx, it in enumerate(items, 1):
             if not isinstance(it, dict):
@@ -68,8 +78,9 @@ def validate_subset(candidate_pool: Dict[str, Any], ai_output: Dict[str, Any]) -
             j = it.get("journal")
             if j not in allowed:
                 errors.append(f"{bucket}[{idx}]: 期刊不在候选池: {j!r}")
-            if not it.get("topic"):
-                errors.append(f"{bucket}[{idx}]: 缺少 topic 字段")
+            topic = it.get("topic")
+            if not isinstance(topic, str) or not topic.strip():
+                errors.append(f"{bucket}[{idx}]: 缺少非空 topic")
     return errors
 
 
@@ -77,11 +88,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--candidate_pool_json", required=True, help="候选池 JSON（绝对路径；可为单池或 fit/easy/value 多池）")
     ap.add_argument("--ai_output_json", required=True, help="AI 输出 JSON（绝对路径）")
+    ap.add_argument("--topk", type=int, default=10, help="每个模式至少需要的条目数（默认 10）")
     args = ap.parse_args()
 
     pool = load_json(os.path.abspath(args.candidate_pool_json))
     out = load_json(os.path.abspath(args.ai_output_json))
-    errors = validate_subset(pool, out)
+    errors = validate_subset(pool, out, topk=args.topk)
     if errors:
         print("INVALID")
         for e in errors:

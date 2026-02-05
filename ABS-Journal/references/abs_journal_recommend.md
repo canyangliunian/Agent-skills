@@ -109,7 +109,7 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_j
 
 ### Step 3：保存 AI 输出 JSON，并做子集校验 + 生成固定列报告
 
-AI 输出 JSON 约定：
+AI 输出 JSON 约定（必须包含三组且各 ≥ TopK=10）：
 
 ```json
 {
@@ -119,7 +119,7 @@ AI 输出 JSON 约定：
 }
 ```
 
-运行校验与报告生成（仍然不联网）：
+运行校验与报告生成（单次即可生成三模式固定列表格，仍然不联网）。相对路径基准：项目根 `/Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal`。
 
 ```bash
 python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_journal.py \
@@ -130,14 +130,20 @@ python3 /Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal/scripts/abs_j
   --topk 10 \
   --rating_filter "1,2,3" \
   --hybrid \
-  --export_candidate_pool_json "/tmp/candidate_pool_fit.json" \
-  --ai_output_json "/tmp/ai_output.json" \
-  --hybrid_report_md "/tmp/hybrid_report.md"
+  --export_candidate_pool_json "assets/candidate_pool_fit.json" \
+  --ai_output_json "assets/ai_output.json" \
+  --hybrid_report_md "assets/hybrid_report.md"
 ```
 
 注意：
 - 若 AI 输出包含候选池之外的期刊名，校验会失败并提示具体条目，必须让 AI 重试（禁止悄悄替换）。
+- 若缺少 fit/easy/value 任一键，或任一组少于 TopK=10 条，或 topic 为空，将直接报错退出。
 - `期刊主题` 为 AI 解释性摘要，用于解释与论文主题的匹配关系；不是期刊官方 Aims&Scope。
+
+建议输出路径（相对项目根，便于留存与复现）：
+- 候选池：`assets/candidate_pool_fit.json`
+- AI 输出：`assets/ai_output.json`
+- 报告：`assets/hybrid_report.md`
 
 ## 参数说明（与 `-h` 输出一致）
 

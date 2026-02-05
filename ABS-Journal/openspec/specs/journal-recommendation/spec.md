@@ -42,3 +42,12 @@
 - **WHEN** 用户需要基于本地 AJG CSV 推荐投稿期刊
 - **THEN** 系统 MUST 提供 `references/abs_journal_recommend.md`，包含推荐入口用法、模式（easy/fit/value）、数据依赖与常见错误
 
+## MODIFIED Requirements
+
+### Requirement: Hybrid report generation
+The system SHALL generate a Markdown report for hybrid mode that now includes all three recommendation modes (fit, easy, value) in one file when `--hybrid_report_md` is provided.
+
+#### Scenario: Three-mode report produced
+- **WHEN** the user supplies `--hybrid --export_candidate_pool_json <path> --ai_output_json <path> --hybrid_report_md <path>`
+- **THEN** the resulting report SHALL contain separate sections for fit, easy, and value, each with TopK rows and fixed columns.
+
