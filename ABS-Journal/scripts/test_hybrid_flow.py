@@ -92,12 +92,43 @@ def main() -> int:
 
         j = pick_first(pool_path)
         topk = 10
-        items = [{"journal": j, "topic": f"mock topic {i}"} for i in range(1, topk + 1)]
-        ai_obj = {"easy": items, "medium": items, "hard": items}
+        items_easy = [{"journal": j, "topic": f"mock topic easy {i}"} for i in range(1, topk + 1)]
+        items_medium = [{"journal": j, "topic": f"mock topic medium {i}"} for i in range(1, topk + 1)]
+        items_hard = [{"journal": j, "topic": f"mock topic hard {i}"} for i in range(1, topk + 1)]
+        # Make sure baseline test uses non-overlapping journals across buckets
+        if topk >= 2:
+            items_medium[0]["journal"] = j + " (alt-medium)"
+            items_hard[0]["journal"] = j + " (alt-hard)"
+        ai_obj = {"easy": items_easy, "medium": items_medium, "hard": items_hard}
         with open(ai_path, "w", encoding="utf-8") as f:
             json.dump(ai_obj, f, ensure_ascii=False, indent=2)
 
+        # The above "alt-*" journals won't be in candidate pool; instead, pick distinct journals from pool when possible.
+        pool = load_json(pool_path)
+        js = [((c or {}).get("journal") or "").strip() for c in (pool.get("candidates") or []) if isinstance(c, dict)]
+        js = [x for x in js if x]
+        if len(js) >= 3:
+            items_easy = [{"journal": js[0], "topic": f"mock topic easy {i}"} for i in range(1, topk + 1)]
+            items_medium = [{"journal": js[1], "topic": f"mock topic medium {i}"} for i in range(1, topk + 1)]
+            items_hard = [{"journal": js[2], "topic": f"mock topic hard {i}"} for i in range(1, topk + 1)]
+            ai_obj = {"easy": items_easy, "medium": items_medium, "hard": items_hard}
+            with open(ai_path, "w", encoding="utf-8") as f:
+                json.dump(ai_obj, f, ensure_ascii=False, indent=2)
+
         run([sys.executable, abs_ai_review, "--candidate_pool_json", pool_path, "--ai_output_json", ai_path, "--topk", str(topk)])
+
+        # Overlap should be rejected by validator (default expectation: no overlap across buckets)
+        overlap_ai_path = os.path.join(td, "ai_overlap.json")
+        overlap_obj = {"easy": items_easy, "medium": items_easy, "hard": items_hard}
+        with open(overlap_ai_path, "w", encoding="utf-8") as f:
+            json.dump(overlap_obj, f, ensure_ascii=False, indent=2)
+        p = subprocess.run(
+            [sys.executable, abs_ai_review, "--candidate_pool_json", pool_path, "--ai_output_json", overlap_ai_path, "--topk", str(topk)],
+            capture_output=True,
+            text=True,
+        )
+        if p.returncode == 0:
+            raise RuntimeError("expected overlap validation to fail, but it passed")
 
         proc = subprocess.run(
             [sys.executable, hybrid_report, "--candidate_pool_json", pool_path, "--ai_output_json", ai_path, "--topk", str(topk)],

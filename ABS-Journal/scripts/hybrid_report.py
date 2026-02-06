@@ -71,6 +71,20 @@ def normalize_ai(ai: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
     return out
 
 
+def find_cross_bucket_overlaps(ai_norm: Dict[str, List[Dict[str, Any]]]) -> Dict[str, List[str]]:
+    """Return overlaps as mapping: journal -> list of buckets it appears in (only if len>1)."""
+    seen: Dict[str, List[str]] = {}
+    for bucket in ["easy", "medium", "hard"]:
+        for it in ai_norm.get(bucket) or []:
+            j = (it.get("journal") or "").strip()
+            if not j:
+                continue
+            seen.setdefault(j, [])
+            if bucket not in seen[j]:
+                seen[j].append(bucket)
+    return {j: buckets for j, buckets in seen.items() if len(buckets) > 1}
+
+
 def star_label(v: str) -> str:
     return (v or "").strip()
 
@@ -128,6 +142,7 @@ def render_report(
         meta = extract_meta(pool)
         idx_multi = {"easy": build_index(pool), "medium": build_index(pool), "hard": build_index(pool)}
     ai_norm = normalize_ai(ai)
+    overlaps = find_cross_bucket_overlaps(ai_norm)
 
     lines: List[str] = []
     lines.append("# 投稿期刊推荐（混合流程：脚本候选池 → AI 二次筛选）")
@@ -168,6 +183,13 @@ def render_report(
     lines.append(render_table("Easy Top10", ai_norm["easy"], idx_multi.get("easy") or {}, topk))
     lines.append(render_table("Medium Top10", ai_norm["medium"], idx_multi.get("medium") or {}, topk))
     lines.append(render_table("Hard Top10", ai_norm["hard"], idx_multi.get("hard") or {}, topk))
+    if overlaps:
+        lines.append("## 提醒：跨难度重复")
+        lines.append("")
+        lines.append("检测到同一期刊在不同难度中重复出现（建议按 hard→medium→easy 的优先级去重后再生成最终报告）：")
+        for j, buckets in sorted(overlaps.items(), key=lambda x: x[0].lower()):
+            lines.append(f"- {md_escape(j)}：{', '.join(buckets)}")
+        lines.append("")
     lines.append("## 说明")
     lines.append("")
     lines.append("- `期刊主题` 为 AI 解释性摘要，用于解释与论文主题的匹配关系；不是期刊官方 Aims&Scope。")

@@ -36,6 +36,30 @@ def load_json(path: str) -> Dict[str, Any]:
         return json.load(f)
 
 
+def validate_no_overlap(ai_output: Dict[str, Any]) -> List[str]:
+    """Validate that easy/medium/hard selections do not overlap (same journal in multiple buckets)."""
+    modes = ["easy", "medium", "hard"]
+    seen: Dict[str, str] = {}
+    errors: List[str] = []
+
+    for bucket in modes:
+        items = ai_output.get(bucket) or []
+        if not isinstance(items, list):
+            continue
+        for idx, it in enumerate(items, 1):
+            if not isinstance(it, dict):
+                continue
+            j = (it.get("journal") or "").strip()
+            if not j:
+                continue
+            prev = seen.get(j)
+            if prev and prev != bucket:
+                errors.append(f"跨模式重复: {j!r} 同时出现在 {prev} 与 {bucket}（{bucket}[{idx}]）")
+            else:
+                seen[j] = bucket
+    return errors
+
+
 def validate_subset(candidate_pool: Dict[str, Any], ai_output: Dict[str, Any], topk: int) -> List[str]:
     """Validate AI output against candidate pool with tri-mode requirements."""
     modes = ["easy", "medium", "hard"]
@@ -81,6 +105,9 @@ def validate_subset(candidate_pool: Dict[str, Any], ai_output: Dict[str, Any], t
             topic = it.get("topic")
             if not isinstance(topic, str) or not topic.strip():
                 errors.append(f"{bucket}[{idx}]: 缺少非空 topic")
+
+    # Cross-bucket overlap validation (default expectation: no overlap)
+    errors.extend(validate_no_overlap(ai_output))
     return errors
 
 
