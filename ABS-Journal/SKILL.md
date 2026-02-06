@@ -10,7 +10,7 @@ description: Use when a user asks to recommend target journals via a hybrid ABS/
 - 默认推荐 **只使用本地 AJG CSV**（`assets/data/ajg_<year>_journals_core_custom.csv`），不得自动联网更新。
 - 只有当用户明确提出 **更新/重新抓取/刷新/更新数据库/更新ABS(AJG)数据** 时，才运行抓取脚本更新 `assets/data/`。
 - 抓取登录凭据仅通过环境变量 `AJG_EMAIL` / `AJG_PASSWORD` 提供；不要在文件中写入明文密码。
-- 命令行示例默认使用 **项目根相对路径（assets/）**，仅在用户明确要求时使用绝对路径并注明基准。
+- 命令行示例默认使用 **项目根相对路径**（数据仍在 `assets/data/`；推荐产出统一在 `reports/`），仅在用户明确要求时使用绝对路径并注明基准。
 - 推荐流程为：脚本导出主题贴合候选池 → AI 仅在候选池内二次筛选 → 子集校验 → 三段固定列报告。
 
 ## 参数职责（避免混淆）
@@ -33,9 +33,10 @@ python3 scripts/abs_journal.py \
   --topk 10 \
   --rating_filter "1,2,3" \
   --hybrid \
-  --export_candidate_pool_json "assets/candidate_pool.json" \
-  --ai_output_json "assets/ai_output.json" \
-  --hybrid_report_md "assets/hybrid_report.md"
+  --export_candidate_pool_json "candidate_pool.json" \
+  --ai_output_json "ai_output.json" \
+  --ai_report_md "ai_report.md" \
+  --auto_ai
 ```
 
 ### B) 更新 AJG/ABS 数据库（仅在用户明确要求时）

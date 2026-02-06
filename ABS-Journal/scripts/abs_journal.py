@@ -30,12 +30,17 @@ import sys
 from typing import List
 
 from abs_paths import data_dir as default_data_dir
+from abs_paths import reports_dir as default_reports_dir
 from abs_paths import skill_root as resolve_skill_root
 
 
 SKILL_ROOT = str(resolve_skill_root())
 
-DEFAULT_EXPORT_DIR = os.path.join(SKILL_ROOT, "assets")
+DEFAULT_EXPORT_DIR = os.path.join(SKILL_ROOT, "assets")  # legacy; reports go to DEFAULT_REPORTS_DIR
+DEFAULT_REPORTS_DIR = str(default_reports_dir())
+
+DEFAULT_AI_OUTPUT_JSON = "ai_output.json"
+DEFAULT_AI_REPORT_MD = "ai_report.md"
 
 # Default rating buckets for a more intuitive difficulty layering.
 # Users can override via --rating_filter explicitly.
@@ -56,6 +61,8 @@ def resolve_inside_skill(path: str, *, base_dir: str) -> str:
         return ""
     if os.path.isabs(path):
         return os.path.abspath(path)
+    # Avoid accidental duplication like "assets/assets/foo.json" when callers pass "assets/foo.json"
+    path = strip_leading_dirs(path, "assets", "assets/assets", "reports", "reports/reports")
     return os.path.abspath(os.path.join(base_dir, path))
 
 
@@ -78,6 +85,88 @@ def run_py(script_rel: str, argv: List[str]) -> int:
 
     proc = subprocess.run([sys.executable, script, *argv])
     return int(proc.returncode)
+
+
+def _load_candidate_pools(export_json_list: List[str]) -> List[dict]:
+    import json
+
+    pools: List[dict] = []
+    for p in export_json_list:
+        if not p:
+            continue
+        with open(p, "r", encoding="utf-8") as f:
+            pools.append(json.load(f))
+    return pools
+
+
+def _select_topk_from_pools(export_json_list: List[str], *, topk: int) -> dict:
+    """Auto-pick top journals from candidate pools (offline; no external API)."""
+    pools = _load_candidate_pools(export_json_list)
+    if not pools:
+        raise RuntimeError("未找到候选池 JSON（请先生成候选池）")
+
+    by_mode = {}
+    for pool in pools:
+        meta = (pool or {}).get("meta") or {}
+        mode = (meta.get("mode") or "").strip() or "unknown"
+        by_mode[mode] = pool
+
+    def pick_from(pool: dict) -> List[dict]:
+        candidates = (pool or {}).get("candidates") or []
+
+        def key(c: dict):
+            s = (c or {}).get("signals") or {}
+            return (float(s.get("total_score") or 0.0), float(s.get("fit_score") or 0.0))
+
+        ranked = sorted(candidates, key=key, reverse=True)
+        picked = []
+        for c in ranked[:topk]:
+            picked.append(
+                {
+                    "journal": c.get("journal", ""),
+                    "ajg_2024": c.get("ajg_2024", ""),
+                    "topic": "根据候选池打分（主题贴合/可投稿性/价值权重等）自动筛选",
+                }
+            )
+        return picked
+
+    # Ensure non-overlap across easy/medium/hard.
+    picked_names = set()
+
+    def pick_unique(mode: str) -> List[dict]:
+        pool = by_mode.get(mode) or pools[0]
+        candidates = (pool or {}).get("candidates") or []
+
+        def key(c: dict):
+            s = (c or {}).get("signals") or {}
+            return (float(s.get("total_score") or 0.0), float(s.get("fit_score") or 0.0))
+
+        ranked = sorted(candidates, key=key, reverse=True)
+        out: List[dict] = []
+        for c in ranked:
+            name = (c.get("journal") or "").strip()
+            if not name or name in picked_names:
+                continue
+            out.append(
+                {
+                    "journal": name,
+                    "ajg_2024": c.get("ajg_2024", ""),
+                    "topic": "根据候选池打分（主题贴合/可投稿性/价值权重等）自动筛选",
+                }
+            )
+            picked_names.add(name)
+            if len(out) >= topk:
+                break
+        if len(out) < topk:
+            raise RuntimeError(f"--auto_ai 生成失败：{mode} 仅选到 {len(out)}/{topk}（候选池不足或重复过多）")
+        return out
+
+    return {
+        "easy": pick_unique("easy"),
+        "medium": pick_unique("medium"),
+        "hard": pick_unique("hard"),
+        "meta": {"generated_by": "abs_journal.py --auto_ai"},
+    }
 
 
 def main() -> int:
@@ -108,7 +197,7 @@ def main() -> int:
     ap_rec.add_argument(
         "--export_candidate_pool_json",
         default="",
-        help="导出候选池 JSON（用于 AI 二次筛选）。为空则不导出。相对路径将写入本 skill 的 assets/ 下。",
+        help="导出候选池 JSON（用于 AI 二次筛选）。为空则不导出。相对路径将写入本 skill 的 reports/ 下。",
     )
     ap_rec.add_argument(
         "--hybrid",
@@ -117,13 +206,18 @@ def main() -> int:
     )
     ap_rec.add_argument(
         "--ai_output_json",
-        default="",
-        help="AI 二次筛选输出 JSON（仅在 --hybrid 时使用）。相对路径将从本 skill 的 assets/ 下解析。",
+        default=DEFAULT_AI_OUTPUT_JSON,
+        help="AI 二次筛选输出 JSON（仅在 --hybrid 时使用）。相对路径将从本 skill 的 reports/ 下解析。",
     )
     ap_rec.add_argument(
-        "--hybrid_report_md",
-        default="",
-        help="混合流程最终报告 Markdown 输出路径。相对路径将写入本 skill 的 assets/ 下；需同时提供 --ai_output_json。",
+        "--auto_ai",
+        action="store_true",
+        help="自动生成 AI 输出 JSON（离线；不调用外部 API），并继续执行子集校验与报告生成（需同时提供 --ai_output_json 与 --ai_report_md）",
+    )
+    ap_rec.add_argument(
+        "--ai_report_md",
+        default=DEFAULT_AI_REPORT_MD,
+        help="混合流程最终报告 Markdown 输出路径。相对路径将写入本 skill 的 reports/ 下；需同时提供 --ai_output_json。",
     )
     ap_rec.add_argument(
         "--rating_filter",
@@ -155,6 +249,7 @@ def main() -> int:
 
     if args.cmd == "recommend":
         data_dir = os.path.abspath(args.data_dir)
+        os.makedirs(DEFAULT_REPORTS_DIR, exist_ok=True)
         if args.update:
             fetch_args = ["--outdir", data_dir]
             returncode = run_py("scripts/ajg_fetch.py", fetch_args)
@@ -165,8 +260,8 @@ def main() -> int:
         # pass --ajg_csv explicitly via direct call to abs_article_impl.py,
         # or update this mapping later.
         raw_export = (args.export_candidate_pool_json or "").strip()
-        raw_export = strip_leading_dirs(raw_export, "assets")
-        export_json = resolve_inside_skill(raw_export, base_dir=DEFAULT_EXPORT_DIR) if raw_export else ""
+        raw_export = strip_leading_dirs(raw_export, "reports", "reports/reports", "assets", "assets/assets")
+        export_json = resolve_inside_skill(raw_export, base_dir=DEFAULT_REPORTS_DIR) if raw_export else ""
         if args.hybrid and not export_json:
             raise RuntimeError("--hybrid 需要同时提供 --export_candidate_pool_json（候选池 JSON 输出路径）")
 
@@ -226,13 +321,26 @@ def main() -> int:
             if not export_json_list or any((not p) for p in export_json_list):
                 raise RuntimeError("混合流程需要候选池 JSON 输出（请提供 --export_candidate_pool_json）")
             pool_arg = export_json_list if multi_pool else export_json_list[0]
+            ai_output_path = resolve_inside_skill(args.ai_output_json, base_dir=DEFAULT_REPORTS_DIR)
+
+            if args.auto_ai:
+                if not args.ai_report_md:
+                    raise RuntimeError("--auto_ai 需要同时提供 --ai_report_md（用于输出最终报告）")
+                os.makedirs(os.path.dirname(ai_output_path) or ".", exist_ok=True)
+                import json
+
+                auto = _select_topk_from_pools(export_json_list, topk=args.topk)
+                with open(ai_output_path, "w", encoding="utf-8") as f:
+                    json.dump(auto, f, ensure_ascii=False, indent=2)
+                print(f"已自动生成 AI 输出 JSON：{ai_output_path}")
+
             returncode = run_py(
                 "scripts/abs_ai_review.py",
                 [
                     "--candidate_pool_json",
                     pool_arg if isinstance(pool_arg, str) else pool_arg[0],
                     "--ai_output_json",
-                    resolve_inside_skill(args.ai_output_json, base_dir=DEFAULT_EXPORT_DIR),
+                    ai_output_path,
                     "--topk",
                     str(args.topk),
                 ],
@@ -240,8 +348,8 @@ def main() -> int:
             if returncode != 0:
                 return returncode
 
-            if args.hybrid_report_md:
-                out_md = resolve_inside_skill(args.hybrid_report_md, base_dir=DEFAULT_EXPORT_DIR)
+            if args.ai_report_md:
+                out_md = resolve_inside_skill(args.ai_report_md, base_dir=DEFAULT_REPORTS_DIR)
                 os.makedirs(os.path.dirname(out_md) or ".", exist_ok=True)
                 import subprocess
 
@@ -253,7 +361,7 @@ def main() -> int:
                         "--candidate_pool_json",
                         pool_for_report,
                         "--ai_output_json",
-                        resolve_inside_skill(args.ai_output_json, base_dir=DEFAULT_EXPORT_DIR),
+                        ai_output_path,
                         "--topk",
                         str(args.topk),
                     ],

@@ -55,7 +55,8 @@
       - Implemented add functionality
       - Fixed FileNotFoundError
   -->
-  -
+  - 接收新需求：最终报告列改为“序号，期刊名，ABS星级，Field”。
+  - 更新 task_plan.md 与 findings.md，切换任务目标到报告呈现格式调整。
 - Files created/modified:
   <!-- 
     WHAT: Which files you created or changed.
@@ -65,7 +66,8 @@
       - todos.json (created by app)
       - task_plan.md (updated)
   -->
-  -
+  - plan/task_plan.md（更新）
+  - plan/findings.md（更新）
 
 ### Phase 2: [Title]
 <!-- 

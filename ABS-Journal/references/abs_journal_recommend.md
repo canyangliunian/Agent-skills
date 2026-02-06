@@ -119,7 +119,7 @@ AI 输出 JSON 约定（必须包含三组且各 ≥ TopK=10）：
 }
 ```
 
-运行校验与报告生成（单次即可生成三模式固定列表格，仍然不联网）。相对路径基准：项目根（即包含 `SKILL.md` 的目录）。
+运行校验与报告生成（单次即可生成三模式固定列表格，仍然不联网）。相对路径基准：项目根（即包含 `SKILL.md` 的目录）；推荐产出统一写入 `reports/`。
 
 ```bash
 python3 scripts/abs_journal.py \
@@ -130,9 +130,9 @@ python3 scripts/abs_journal.py \
   --topk 10 \
   --rating_filter "1,2,3" \
   --hybrid \
-  --export_candidate_pool_json "assets/candidate_pool.json" \
-  --ai_output_json "assets/ai_output.json" \
-  --hybrid_report_md "assets/hybrid_report.md"
+  --export_candidate_pool_json "candidate_pool.json" \
+  --ai_output_json "ai_output.json" \
+  --ai_report_md "ai_report.md"
 ```
 
 注意：
@@ -140,10 +140,10 @@ python3 scripts/abs_journal.py \
 - 若缺少 easy/medium/hard 任一键，或任一组少于 TopK=10 条，或 topic 为空，将直接报错退出。
 - `期刊主题` 为 AI 解释性摘要，用于解释与论文主题的匹配关系；不是期刊官方 Aims&Scope。
 
-建议输出路径（相对项目根，便于留存与复现）：
-- 候选池：`assets/candidate_pool.json`
-- AI 输出：`assets/ai_output.json`
-- 报告：`assets/hybrid_report.md`
+建议输出路径（固定输出目录：`reports/`，便于留存与复现）：
+- 候选池：`reports/candidate_pool_easy.json` / `reports/candidate_pool_medium.json` / `reports/candidate_pool_hard.json`
+- AI 输出：`reports/ai_output.json`
+- 报告：`reports/ai_report.md`
 
 ## 参数说明（与 `-h` 输出一致）
 
@@ -160,9 +160,9 @@ python3 scripts/abs_journal.py \
 - `--field_scope SCOPE`：候选期刊 Field 白名单（AJG CSV 的 Field 列，逗号分隔；精确匹配）。为空则使用默认白名单：`ECON, FINANCE, PUB SEC, REGIONAL STUDIES, PLANNING AND ENVIRONMENT, SOC SCI`。
 - `--rating_filter "1,2,3"`：AJG/ABS 星级过滤（逗号分隔，支持 `4*`）
 - `--hybrid`：启用混合流程（只导出候选池/做校验/生成报告；不调用外部 API）
-- `--export_candidate_pool_json PATH`：导出候选池 JSON（绝对路径）
-- `--ai_output_json PATH`：AI 输出 JSON（绝对路径）
-- `--hybrid_report_md PATH`：混合流程最终报告 Markdown 输出路径（绝对路径）
+- `--export_candidate_pool_json PATH`：导出候选池 JSON（相对路径将写入 `reports/`）
+- `--ai_output_json PATH`：AI 输出 JSON（相对路径将从 `reports/` 解析）
+- `--ai_report_md PATH`：混合流程最终报告 Markdown 输出路径（相对路径将写入 `reports/`）
 
 ## 数据依赖（默认从本地读取）
 

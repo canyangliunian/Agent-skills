@@ -12,6 +12,7 @@ Environment variables (optional):
 - ABS_JOURNAL_HOME: override skill root (directory that contains SKILL.md, assets/, scripts/)
 - ABS_JOURNAL_DATA_DIR: override data directory (default: <root>/assets/data)
 - ABS_JOURNAL_CACHE_DIR: override cache directory (default: <root>/.cache)
+- ABS_JOURNAL_REPORTS_DIR: override reports directory (default: <root>/reports)
 """
 
 from __future__ import annotations
@@ -62,6 +63,12 @@ def cache_dir() -> Path:
     return (skill_root() / ".cache").resolve()
 
 
+def reports_dir() -> Path:
+    override = _env_path("ABS_JOURNAL_REPORTS_DIR")
+    if override is not None:
+        return override
+    return (skill_root() / "reports").resolve()
+
+
 def ajg_csv_default(year: str = "2024") -> Path:
     return (data_dir() / f"ajg_{year}_journals_core_custom.csv").resolve()
-

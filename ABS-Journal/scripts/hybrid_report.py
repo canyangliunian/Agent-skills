@@ -17,8 +17,7 @@ from typing import Any, Dict, List, Tuple
 
 
 def load_json_abs(path: str) -> Dict[str, Any]:
-    if not os.path.isabs(path):
-        raise RuntimeError(f"路径必须是绝对路径: {path}")
+    path = os.path.abspath(path)
     if not os.path.exists(path):
         raise RuntimeError(f"JSON 不存在: {path}")
     with open(path, "r", encoding="utf-8") as f:
@@ -98,7 +97,7 @@ def render_table(
     lines: List[str] = []
     lines.append(f"### {bucket_title}")
     lines.append("")
-    lines.append("| 序号 | 期刊名 | ABS星级 | 期刊主题 |")
+    lines.append("| 序号 | 期刊名 | ABS星级 | Field |")
     lines.append("|---:|---|---:|---|")
 
     count = 0
@@ -108,8 +107,8 @@ def render_table(
         j = it["journal"]
         cand = idx.get(j) or {}
         rating = star_label(str(cand.get("ajg_2024") or ""))
-        topic = it["topic"]
-        lines.append(f"| {i} | {md_escape(j)} | {md_escape(rating)} | {md_escape(topic)} |")
+        field = (cand.get("field") or "").strip()
+        lines.append(f"| {i} | {md_escape(j)} | {md_escape(rating)} | {md_escape(field)} |")
         count += 1
     lines.append("")
     return "\n".join(lines)
@@ -198,15 +197,15 @@ def render_report(
         lines.append("")
     lines.append("## 说明")
     lines.append("")
-    lines.append("- `期刊主题` 为 AI 解释性摘要，用于解释与论文主题的匹配关系；不是期刊官方 Aims&Scope。")
+    lines.append("- `Field` 来自候选池（AJG CSV 的 Field 列），用于快速定位期刊所属领域。")
     lines.append("- 本流程不自动联网查询审稿周期/版面费/投稿偏好等信息。")
     return "\n".join(lines)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--candidate_pool_json", required=True, help="候选池 JSON（绝对路径）")
-    ap.add_argument("--ai_output_json", required=True, help="AI 输出 JSON（绝对路径，需已通过子集校验）")
+    ap.add_argument("--candidate_pool_json", required=True, help="候选池 JSON（路径）")
+    ap.add_argument("--ai_output_json", required=True, help="AI 输出 JSON（路径，需已通过子集校验）")
     ap.add_argument("--topk", type=int, default=10, help="每段输出 TopK（默认10）")
     args = ap.parse_args()
 

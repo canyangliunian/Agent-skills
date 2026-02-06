@@ -143,7 +143,7 @@ def main() -> int:
             f.write(proc.stdout)
 
         text = proc.stdout
-        for key in ["Easy Top10", "Medium Top10", "Hard Top10", "序号", "期刊名", "ABS星级", "期刊主题"]:
+        for key in ["Easy Top10", "Medium Top10", "Hard Top10", "序号", "期刊名", "ABS星级", "Field"]:
             if key not in text:
                 raise RuntimeError(f"missing in report: {key}")
 

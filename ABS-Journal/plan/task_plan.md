@@ -6,19 +6,19 @@
 -->
 
 ## Goal
-- 将仓库内“写死的绝对路径”（尤其是从 `.../Skills/ABS-Journal` 复制到 `~/.agents/skills/abs-journal` 后会失效的路径）改造为“可移植/可配置”的路径解析方案。
-- 目标：同一套代码既能在开发目录运行，也能复制到 `~/.agents/skills/abs-journal` 运行；更换电脑/用户名/目录结构时无需改代码。
+- 将最终推荐报告的呈现方式改为：`序号 | 期刊名 | ABS星级 | Field`（用于 hybrid_report.md 等最终输出）。
+- 要求：不改变推荐/候选池/校验逻辑，仅调整最终报告的固定列与顺序。
 
 ## Non-goals
-- 不改变现有业务逻辑（除路径解析、少量 CLI 参数/默认值）。
-- 不做大规模重构（仅围绕路径与配置）。
+- 不联网更新 AJG 数据、不改评分/筛选/候选池/子集校验逻辑。
+- 不改命令行参数语义（仅必要时新增/调整报告列说明）。
 
 ## Current Phase
 <!-- 
   WHAT: Which phase you're currently working on (e.g., "Phase 1", "Phase 3").
   WHY: Quick reference for where you are in the task. Update this as you progress.
 -->
-Phase 1（扫描硬编码路径与入口点；并行调整三难度语义）
+Phase 1（定位报告生成逻辑与列定义）
 
 ## Phases
 <!-- 
@@ -27,15 +27,13 @@ Phase 1（扫描硬编码路径与入口点；并行调整三难度语义）
   WHEN: Update status after completing each phase: pending → in_progress → complete
 -->
 
-### Phase 1: Requirements & Discovery（扫描硬编码路径）
+### Phase 1: Requirements & Discovery（定位报告生成逻辑）
 <!-- 
   WHAT: Understand what needs to be done and gather initial information.
   WHY: Starting without understanding leads to wasted effort. This phase prevents that.
 -->
-- [ ] 汇总现有目录结构与运行入口
-- [ ] 全仓扫描绝对路径/家目录写死/开发机路径
-- [ ] 记录“必须可配置”的路径清单（脚本/数据/缓存/输出）
-- [x] 按用户要求调整三模式语义为投稿难度（easy/medium/hard）
+- [ ] 确认最终报告由哪个脚本生成（`scripts/hybrid_report.py`）
+- [ ] 确认当前报告列顺序与字段映射来源（期刊名/星级/Field）
 - **Status:** in_progress
 <!-- 
   STATUS VALUES:
@@ -44,45 +42,34 @@ Phase 1（扫描硬编码路径与入口点；并行调整三难度语义）
   - complete: Finished this phase
 -->
 
-### Phase 2: Planning & Structure（路径策略设计）
+### Phase 2: Implementation（修改报告固定列）
 <!-- 
   WHAT: Decide how you'll approach the problem and what structure you'll use.
   WHY: Good planning prevents rework. Document decisions so you remember why you chose them.
 -->
-- [ ] 定义统一路径解析函数（repo root / install root / data / cache）
-- [ ] 约定环境变量覆盖（如 `ABS_JOURNAL_HOME` 等）
-- [ ] 记录兼容策略（旧路径/默认行为）
+- [ ] 修改 `scripts/hybrid_report.py` 输出列为：序号，期刊名，ABS星级，Field
+- [ ] 若 `ai_output.json` 中缺少 Field，则从候选池映射补齐
 - **Status:** pending
 
-### Phase 3: Implementation（逐文件替换）
+### Phase 3: Testing & Verification（最小自测）
 <!-- 
   WHAT: Actually build/create/write the solution.
   WHY: This is where the work happens. Break into smaller sub-tasks if needed.
 -->
-- [ ] 新增/改造 `scripts/` 下的路径工具模块
-- [ ] 替换硬编码路径为统一工具函数调用
-- [ ] 增加基础错误提示（找不到路径时给出可操作指引）
+- [ ] 运行一次 `--hybrid --auto_ai --ai_report_md ...` 生成报告
+- [ ] 检查 `assets/hybrid_report.md` 表头与列顺序是否符合要求
 - **Status:** pending
 
-### Phase 4: Testing & Verification（最小自测）
+### Phase 4: Delivery（更新说明）
 <!-- 
   WHAT: Verify everything works and meets requirements.
   WHY: Catching issues early saves time. Document test results in progress.md.
 -->
-- [ ] 在“开发目录”运行最小命令集
-- [ ] 复制到 `~/.agents/skills/abs-journal` 后再跑一遍最小命令集（或模拟）
-- [ ] 记录测试日志与差异
+- [ ] 更新 `references/abs_journal_recommend.md`（如有列说明）
+- [ ] 更新 `assets/recommendation_example.md`（如有固定列示例）
 - **Status:** pending
 
-### Phase 5: Delivery（文档与迁移说明）
-<!-- 
-  WHAT: Final review and handoff to user.
-  WHY: Ensures nothing is forgotten and deliverables are complete.
--->
-- [ ] Review all output files
-- [ ] Ensure deliverables are complete
-- [ ] Deliver to user
-- **Status:** pending
+<!-- Phase 5 removed: merged into Phase 4 -->
 
 ## Key Questions
 <!-- 

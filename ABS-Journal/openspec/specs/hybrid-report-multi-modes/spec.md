@@ -8,7 +8,7 @@
 The system SHALL produce a single Markdown file containing three sections (easy, medium, hard), each listing TopK journals (default 10) derived from the AI-filtered candidate pool.
 
 #### Scenario: Report generated with full modes
-- **WHEN** user runs `abs_journal.py recommend --hybrid --hybrid_report_md <path> --export_candidate_pool_json <path> --ai_output_json <path>`
+- **WHEN** user runs `abs_journal.py recommend --hybrid --ai_report_md <path> --export_candidate_pool_json <path> --ai_output_json <path>`
 - **THEN** the output Markdown SHALL contain three titled sections (Easy, Medium, Hard) each with a table of TopK entries.
 
 ### Requirement: Fixed column layout

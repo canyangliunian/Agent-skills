@@ -73,7 +73,7 @@ python3 scripts/ajg_verify_outputs.py \
 如需只看某个领域（例如只 ECON），请显式传 `--field_scope ECON`。
 注意：`--field` 仅用于“论文领域标签/关键词配置”，不控制候选范围。
 
-示例输出见：`assets/recommendation_example.md`。
+示例输出见：运行后生成的 `reports/ai_report.md`。
 
 推荐脚本（混合模式示例；不联网）：
 
@@ -87,7 +87,13 @@ python3 scripts/abs_journal.py \
   --topk 10 \
   --rating_filter "1,2,3" \
   --hybrid \
-  --export_candidate_pool_json "/tmp/candidate_pool_fit.json"
+  --export_candidate_pool_json "candidate_pool.json" \
+  --auto_ai
+
+# 运行产出（固定输出目录：reports/）
+# - reports/candidate_pool_easy.json, reports/candidate_pool_medium.json, reports/candidate_pool_hard.json
+# - reports/ai_output.json
+# - reports/ai_report.md
 ```
 
 ## OpenSpec
