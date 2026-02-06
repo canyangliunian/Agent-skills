@@ -21,6 +21,8 @@
 - 代码需要从开发目录复制到 `~/.agents/skills/abs-journal` 后仍可运行（路径不能写死）。
 - 更换电脑/用户名/目录结构时无需改代码（通过“自动探测 + 可覆盖配置”实现）。
 - 默认仍以“绝对路径”形式对外展示/日志输出，但这些绝对路径应由运行时解析得到，而非写进仓库。
+- 三类难度需要更清晰的“星级层次感”：`easy` 推荐应主要来自星级 1–2；`medium` 来自 2–3；`hard` 来自 4–4*（星级允许重叠：2 同时属于 easy/medium；4 同时属于 hard）。
+- 候选期刊的默认 Field 范围固定为 5 个 Field 白名单：`ECON, FINANCE, PUB SEC, REGIONAL STUDIES, PLANNING AND ENVIRONMENT, SOC SCI`（其中 `REGIONAL STUDIES, PLANNING AND ENVIRONMENT` 是一个整体 Field 名称）；如需只看某个领域，通过 `--field_scope` 显式覆盖。`--field` 仅作为论文领域标签/关键词配置，不控制候选范围。
 
 ## Observations
 - 当前开发目录：`/Users/lingguiwang/Documents/Coding/LLM/Skills/ABS-Journal`。

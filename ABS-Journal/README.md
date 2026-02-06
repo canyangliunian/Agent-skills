@@ -68,6 +68,11 @@ python3 scripts/ajg_verify_outputs.py \
 
 该推荐 **仅依赖本地 AJG CSV**（默认：`assets/data/ajg_2024_journals_core_custom.csv`），不访问外网。
 
+默认候选期刊来自固定 Field 白名单（AJG CSV 的 `Field` 列；共 5 个 Field，其中 `REGIONAL STUDIES, PLANNING AND ENVIRONMENT` 是一个整体 Field 名称）：
+`ECON, FINANCE, PUB SEC, REGIONAL STUDIES, PLANNING AND ENVIRONMENT, SOC SCI`。
+如需只看某个领域（例如只 ECON），请显式传 `--field_scope ECON`。
+注意：`--field` 仅用于“论文领域标签/关键词配置”，不控制候选范围。
+
 示例输出见：`assets/recommendation_example.md`。
 
 推荐脚本（混合模式示例；不联网）：
@@ -75,9 +80,10 @@ python3 scripts/ajg_verify_outputs.py \
 ```bash
 python3 scripts/abs_journal.py \
   recommend \
+  --field_scope "ECON,FINANCE,PUB SEC,REGIONAL STUDIES, PLANNING AND ENVIRONMENT,SOC SCI" \
   --title "你的论文标题" \
   --abstract "你的论文摘要（可选）" \
-  --mode fit \
+  --mode medium \
   --topk 10 \
   --rating_filter "1,2,3" \
   --hybrid \

@@ -75,6 +75,8 @@ def main() -> int:
                 ajg_csv,
                 "--field",
                 "ECON",
+                "--field_scope",
+                "",
                 "--mode",
                 "medium",
                 "--topk",

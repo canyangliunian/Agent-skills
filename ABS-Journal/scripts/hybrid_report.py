@@ -162,8 +162,14 @@ def render_report(
             lines.append(f"- AJG CSV：{meta.get('ajg_csv')}")
         if meta.get("mode"):
             lines.append(f"- 候选池难度：{meta.get('mode')}")
+        if meta.get("field_scope_effective"):
+            scope = meta.get("field_scope_effective")
+            if isinstance(scope, list):
+                lines.append(f"- 候选 Field：{', '.join([str(x) for x in scope if str(x).strip()])}")
         if meta.get("rating_filter"):
             lines.append(f"- 星级过滤：{meta.get('rating_filter')}")
+        if meta.get("rating_filter_effective") and meta.get("rating_filter_effective") != meta.get("rating_filter"):
+            lines.append(f"- 星级过滤（实际生效/含回退）：{meta.get('rating_filter_effective')}")
         gating = meta.get("gating")
         if isinstance(gating, dict):
             lines.append(f"- 主题贴合候选集：{gating.get('total_after')}（筛选前：{gating.get('total_before')}）")

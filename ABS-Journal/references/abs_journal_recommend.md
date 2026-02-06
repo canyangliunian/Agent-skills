@@ -156,7 +156,8 @@ python3 scripts/abs_journal.py \
   - `medium`：中等难度（折中）
   - `hard`：最困难（更偏高门槛/更“冲刺”）
 - `--topk TOPK`：输出期刊数
-- `--field FIELD`：论文领域（默认 `ECON`）
+- `--field FIELD`：论文领域标签/关键词配置（默认 `ECON`；不控制候选范围）
+- `--field_scope SCOPE`：候选期刊 Field 白名单（AJG CSV 的 Field 列，逗号分隔；精确匹配）。为空则使用默认白名单：`ECON, FINANCE, PUB SEC, REGIONAL STUDIES, PLANNING AND ENVIRONMENT, SOC SCI`。
 - `--rating_filter "1,2,3"`：AJG/ABS 星级过滤（逗号分隔，支持 `4*`）
 - `--hybrid`：启用混合流程（只导出候选池/做校验/生成报告；不调用外部 API）
 - `--export_candidate_pool_json PATH`：导出候选池 JSON（绝对路径）

@@ -37,6 +37,14 @@ SKILL_ROOT = str(resolve_skill_root())
 
 DEFAULT_EXPORT_DIR = os.path.join(SKILL_ROOT, "assets")
 
+# Default rating buckets for a more intuitive difficulty layering.
+# Users can override via --rating_filter explicitly.
+DEFAULT_RATING_FILTER_BY_MODE = {
+    "easy": "1,2",
+    "medium": "2,3",
+    "hard": "4,4*",
+}
+
 
 def resolve_inside_skill(path: str, *, base_dir: str) -> str:
     """Resolve a user path so that relative paths land inside this skill.
@@ -85,7 +93,16 @@ def main() -> int:
     )
     ap_rec.add_argument("--title", required=True, help="论文标题")
     ap_rec.add_argument("--abstract", default="", help="论文摘要")
-    ap_rec.add_argument("--field", default="ECON", help="论文领域（默认ECON）")
+    ap_rec.add_argument("--field", default="ECON", help="论文领域标签/关键词配置（默认ECON；不控制候选范围）")
+    ap_rec.add_argument(
+        "--field_scope",
+        default="",
+        help=(
+            "候选期刊 Field 白名单（AJG CSV 的 Field 列，逗号分隔；精确匹配）。"
+            "默认（留空）即使用内置 5 个 Field 白名单：ECON, FINANCE, PUB SEC, REGIONAL STUDIES, PLANNING AND ENVIRONMENT, SOC SCI。"
+            "如需只看某一个领域，请显式传入（例如：--field_scope ECON）。"
+        ),
+    )
     ap_rec.add_argument("--mode", default="easy", choices=["easy", "medium", "hard"], help="投稿难度：easy(最容易)/medium(中等)/hard(最困难)")
     ap_rec.add_argument("--topk", type=int, default=10, help="每个难度输出期刊数（默认10）")
     ap_rec.add_argument(
@@ -111,7 +128,7 @@ def main() -> int:
     ap_rec.add_argument(
         "--rating_filter",
         default="",
-        help="AJG/ABS 星级过滤（逗号分隔，如: 1,2,3 或 3,4,4*）。为空则不过滤。",
+        help="AJG/ABS 星级过滤（逗号分隔，如: 1,2,3 或 3,4,4*）。默认将按 mode 自动分层：easy=1,2；medium=2,3；hard=4,4*。显式传入则覆盖默认。",
     )
 
     ap_up = sub.add_parser("update", help="更新AJG数据库（需要 env: AJG_EMAIL/AJG_PASSWORD）")
@@ -174,6 +191,9 @@ def main() -> int:
             export_json_list = [export_json] if export_json else [""]
 
         for m, out_json in zip(selected_modes, export_json_list):
+            rating_filter = (args.rating_filter or "").strip()
+            if not rating_filter:
+                rating_filter = DEFAULT_RATING_FILTER_BY_MODE.get(m, "")
             rec_args = [
                 "--ajg_csv",
                 os.path.join(data_dir, "ajg_2024_journals_core_custom.csv"),
@@ -183,6 +203,8 @@ def main() -> int:
                 args.abstract,
                 "--field",
                 args.field,
+                "--field_scope",
+                args.field_scope,
                 "--mode",
                 m,
                 "--topk",
@@ -190,7 +212,7 @@ def main() -> int:
                 "--export_candidate_pool_json",
                 out_json,
                 "--rating_filter",
-                args.rating_filter,
+                rating_filter,
             ]
             returncode = run_py("scripts/abs_article_impl.py", rec_args)
             if returncode != 0:

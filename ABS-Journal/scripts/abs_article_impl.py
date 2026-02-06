@@ -33,6 +33,16 @@ from abs_paths import ajg_csv_default
 
 DEFAULT_AJG_CSV = str(ajg_csv_default("2024"))
 
+# Default candidate field whitelist (AJG CSV: Field column).
+# Note: this controls which journals enter the candidate pool. It is NOT the paper's field label.
+DEFAULT_FIELD_SCOPE = [
+    "ECON",
+    "FINANCE",
+    "PUB SEC",
+    "REGIONAL STUDIES, PLANNING AND ENVIRONMENT",
+    "SOC SCI",
+]
+
 # Keep a skill root for resolving additional bundled assets (e.g., keyword lists).
 from abs_paths import skill_root as resolve_skill_root
 
@@ -121,7 +131,7 @@ def parse_ajg_rating(r: str) -> Tuple[int, bool]:
         return 4, True
     if s in {"1", "2", "3", "4"}:
         return int(s), False
-    return 4, True
+    return 0, False
 
 
 def easiness_score(ajg_2024: str) -> float:
@@ -322,8 +332,10 @@ def total_score(paper: PaperProfile, journal: JournalRow) -> Dict[str, float]:
 
 
 def load_ajg_csv(path: str) -> List[JournalRow]:
+    # Accept both absolute and relative paths.
+    # Relative paths are resolved against this repo/skill root for portability.
     if not os.path.isabs(path):
-        raise RuntimeError("--ajg_csv 必须是绝对路径")
+        path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", path))
     if not os.path.exists(path):
         raise RuntimeError(f"AJG CSV 不存在: {path}")
 
@@ -350,11 +362,8 @@ def load_ajg_csv(path: str) -> List[JournalRow]:
         return rows
 
 
-def pick_candidates(rows: List[JournalRow], paper_field: str) -> List[JournalRow]:
-    allowed = {paper_field}
-    if paper_field == "ECON":
-        allowed |= {"IB&AREA", "PUB SEC", "REGIONAL STUDIES, PLANNING AND ENVIRONMENT"}
-    return [r for r in rows if r.field in allowed]
+def parse_field_scope(raw: str) -> List[str]:
+    return [x.strip() for x in (raw or "").split(",") if x.strip()]
 
 
 def narrow_candidates_by_journal_title(
@@ -372,10 +381,14 @@ def narrow_candidates_by_journal_title(
 
 def group_bucket(ajg_2024: str) -> str:
     level, star = parse_ajg_rating(ajg_2024)
-    if level in {1, 2}:
-        return "A 主投更易"
+    if level == 0:
+        return "未评级"
+    if level == 1:
+        return "A 主投更易（1）"
+    if level == 2:
+        return "A 主投更易（2）"
     if level == 3:
-        return "B 备投折中"
+        return "B 备投折中（3）"
     if level == 4 and star:
         return "C 冲刺更高（4*）"
     return "C 冲刺更高（4）"
@@ -383,6 +396,67 @@ def group_bucket(ajg_2024: str) -> str:
 
 def md_escape(s: str) -> str:
     return (s or "").replace("|", "\\|")
+
+
+def apply_rating_mix(
+    paper: PaperProfile,
+    ranked: List[Tuple[JournalRow, Dict[str, float]]],
+    *,
+    topk: int,
+) -> List[Tuple[JournalRow, Dict[str, float]]]:
+    """Re-balance the topk rows to improve rating hierarchy inside each mode.
+
+    This is applied AFTER normal scoring + rating_filter. It only affects which rows
+    appear in the final TopK (ordering among selected rows is preserved).
+
+    Default quotas (best-effort; only affects the TopK slice, and only if enough candidates exist):
+    - easy bucket (ratings 1/2): try to include at least 2 journals rated "2" in TopK.
+    - medium bucket (ratings 2/3): try to include at least 2 journals rated "3" in TopK.
+    - hard bucket: no mixing here (ratings 4/4*).
+    """
+
+    if topk <= 0:
+        return []
+
+    mode = (paper.mode or "").strip()
+    if mode not in {"easy", "medium"}:
+        return ranked
+
+    if topk < 6:
+        # Too small to enforce meaningful mix; keep simple.
+        return ranked
+
+    want_rating = "2" if mode == "easy" else "3"
+    min_want = 2
+
+    take = ranked[:topk]
+    have = sum(1 for j, _ in take if (j.ajg_2024 or "").strip() == want_rating)
+    if have >= min_want:
+        return ranked
+
+    # Find candidates within ranked[topk:] that match want_rating.
+    needed = min_want - have
+    replacements = []
+    for idx in range(topk, len(ranked)):
+        j, s = ranked[idx]
+        if (j.ajg_2024 or "").strip() == want_rating:
+            replacements.append((idx, (j, s)))
+            if len(replacements) >= needed:
+                break
+    if not replacements:
+        return ranked
+
+    # Replace from the end of TopK those that are NOT want_rating.
+    out = list(ranked)
+    replace_positions = [i for i in range(topk - 1, -1, -1) if (out[i][0].ajg_2024 or "").strip() != want_rating]
+    if not replace_positions:
+        return ranked
+
+    for pos, (src_idx, item) in zip(replace_positions, replacements):
+        # swap item at pos with src_idx
+        out[pos], out[src_idx] = out[src_idx], out[pos]
+
+    return out
 
 
 def render_report(
@@ -409,6 +483,8 @@ def render_report(
     if gating_meta is not None:
         lines.append("## 候选集（主题贴合）")
         lines.append("")
+        if isinstance(getattr(gating_meta, "field_scope_effective", None), list):
+            lines.append(f"- 候选 Field：{', '.join(getattr(gating_meta, 'field_scope_effective'))}")
         lines.append(f"- 策略：{gating_meta.strategy}")
         lines.append(f"- 候选集大小：{gating_meta.total_candidates_after}（筛选前：{gating_meta.total_candidates_before}）")
         lines.append(f"- 目标候选 TopN：{gating_meta.candidate_topn}")
@@ -417,15 +493,17 @@ def render_report(
         lines.append("")
 
     # Keep only topk for output, but preserve global ordering inside each AJG bucket.
-    top_rows = ranked[:topk]
+    # Also apply a small rating-mix rule so easy/medium feel more layered.
+    ranked2 = apply_rating_mix(paper, ranked, topk=topk)
+    top_rows = ranked2[:topk]
     buckets: Dict[str, List[Tuple[JournalRow, Dict[str, float]]]] = {}
     for j, s in top_rows:
         b = group_bucket(j.ajg_2024)
         buckets.setdefault(b, []).append((j, s))
 
-    ordered_buckets = ["A 主投更易", "B 备投折中", "C 冲刺更高（4）", "C 冲刺更高（4*）"]
+    ordered_buckets = ["A 主投更易（1）", "A 主投更易（2）", "B 备投折中（3）", "C 冲刺更高（4）", "C 冲刺更高（4*）", "未评级"]
     if paper.mode == "hard":
-        ordered_buckets = ["C 冲刺更高（4*）", "C 冲刺更高（4）", "B 备投折中", "A 主投更易"]
+        ordered_buckets = ["C 冲刺更高（4*）", "C 冲刺更高（4）", "B 备投折中（3）", "A 主投更易（2）", "A 主投更易（1）", "未评级"]
 
     for bucket in ordered_buckets:
         if bucket not in buckets:
@@ -480,6 +558,8 @@ def render_report(
     lines.append("## 说明")
     lines.append("")
     lines.append("- 本推荐仅基于本地AJG核心目录字段与摘要关键词匹配，不包含外网审稿周期/版面费/投稿偏好等信息。")
+    if paper.mode in {"easy", "medium"}:
+        lines.append("- 为增强层次感：在同一难度的星级桶内，系统会“尽量”混入更高一档星级（easy 尝试包含少量 2；medium 尝试包含少量 3）。若主题贴合候选不足，则可能无法满足。")
     if gating_meta is not None:
         lines.append(
             f"- 已对所有模式启用“主题贴合候选集”前置筛选（策略：{gating_meta.strategy}；候选：{gating_meta.total_candidates_after}/{gating_meta.total_candidates_before}；回退：{'是' if gating_meta.fallback_used else '否'}）。"
@@ -506,6 +586,9 @@ def candidate_pool_to_dict(
     mode: str,
     gating_meta: Optional[GatingMeta],
     rating_filter: str = "",
+    rating_filter_effective: str = "",
+    field_scope_requested: str = "",
+    field_scope_effective: Optional[List[str]] = None,
 ) -> Dict[str, object]:
     pool = []
     for j, s in candidates:
@@ -537,6 +620,9 @@ def candidate_pool_to_dict(
         "mode": mode,
         "ajg_csv": os.path.abspath(ajg_csv_path),
         "rating_filter": rating_filter,
+        "rating_filter_effective": rating_filter_effective or rating_filter,
+        "field_scope_requested": field_scope_requested,
+        "field_scope_effective": field_scope_effective or [],
         "gating": None,
         "count": len(pool),
     }
@@ -569,6 +655,7 @@ class GatingMeta:
     total_candidates_before: int
     total_candidates_after: int
     fallback_used: bool
+    field_scope_effective: List[str]
 
 
 def gate_by_topic_fit(
@@ -593,6 +680,7 @@ def gate_by_topic_fit(
             total_candidates_before=0,
             total_candidates_after=0,
             fallback_used=False,
+            field_scope_effective=[],
         )
         return [], {}, meta
 
@@ -620,18 +708,27 @@ def gate_by_topic_fit(
         total_candidates_before=total_before,
         total_candidates_after=len(gated),
         fallback_used=fallback_used,
+        field_scope_effective=[],
     )
     return gated, fit_map, meta
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(formatter_class=ColorHelpFormatter)
-    ap.add_argument("--ajg_csv", default=DEFAULT_AJG_CSV, help="AJG核心CSV绝对路径")
-    ap.add_argument("--field", default="ECON", help="论文领域（默认ECON）")
+    ap.add_argument("--ajg_csv", default=DEFAULT_AJG_CSV, help="AJG核心CSV路径（绝对/相对均可；相对路径基于项目根）")
+    ap.add_argument("--field", default="ECON", help="论文领域标签/关键词配置（默认ECON；不控制候选范围）")
+    ap.add_argument(
+        "--field_scope",
+        default="",
+        help=(
+            "候选期刊 Field 白名单（AJG CSV 的 Field 列，逗号分隔；精确匹配）。"
+            "为空则使用默认白名单：ECON,FINANCE,PUB SEC,REGIONAL STUDIES, PLANNING AND ENVIRONMENT,SOC SCI。"
+        ),
+    )
     ap.add_argument("--title", required=True, help="论文标题")
     ap.add_argument("--abstract", default="", help="论文摘要")
     ap.add_argument("--mode", default="easy", choices=["easy", "medium", "hard"], help="投稿难度：easy(最容易)/medium(中等)/hard(最困难)")
-    ap.add_argument("--topk", type=int, default=20, help="输出期刊数")
+    ap.add_argument("--topk", type=int, default=10, help="输出期刊数（默认10）")
     ap.add_argument(
         "--profile",
         default=os.environ.get("ABS_PROFILE", "general"),
@@ -655,29 +752,89 @@ def main() -> int:
 
     paper = PaperProfile(field=args.field, title=args.title, abstract=args.abstract, mode=args.mode)
     rows = load_ajg_csv(args.ajg_csv)
-    cand = pick_candidates(rows, paper_field=paper.field)
+    requested_scope_raw = (args.field_scope or "").strip()
+    field_scope_effective = parse_field_scope(requested_scope_raw) if requested_scope_raw else list(DEFAULT_FIELD_SCOPE)
+    if not field_scope_effective:
+        raise RuntimeError("--field_scope 解析后为空；请提供至少一个 Field")
 
-    gated, fit_map, gmeta = gate_by_topic_fit(paper, cand, topk=args.topk)
+    known_fields = {r.field for r in rows if (r.field or "").strip()}
+    unknown = [x for x in field_scope_effective if x not in known_fields]
+    if unknown:
+        known_sorted = sorted(known_fields)
+        raise RuntimeError(
+            "以下 Field 不存在于 AJG CSV 的 Field 列："
+            + ", ".join(repr(x) for x in unknown)
+            + "\n可选 Field（来自 CSV）:\n- "
+            + "\n- ".join(known_sorted)
+        )
 
-    scored: List[Tuple[JournalRow, Dict[str, float]]] = []
-    for j in gated:
-        # Important: scoring MUST be mode-aware for ranking inside the gated candidate set.
-        # Since total_score uses paper.mode, we need to compute inside loop after gating.
-        s = total_score(paper, j)
-        # Ensure gated fit is consistent with ordering, and present even if total_score changes.
-        s["fit"] = float(fit_map.get(j.title, s.get("fit", 0.0)))
-        scored.append((j, s))
+    cand = [r for r in rows if r.field in set(field_scope_effective)]
 
-    scored.sort(key=lambda x: x[1]["total"], reverse=True)
+    def build_ranked(*, candidate_topn: Optional[int]) -> Tuple[List[Tuple[JournalRow, Dict[str, float]]], GatingMeta]:
+        gated, fit_map, gmeta = gate_by_topic_fit(paper, cand, topk=args.topk, candidate_topn=candidate_topn)
+        gmeta = GatingMeta(
+            strategy=gmeta.strategy,
+            candidate_topn=gmeta.candidate_topn,
+            min_candidates=gmeta.min_candidates,
+            total_candidates_before=gmeta.total_candidates_before,
+            total_candidates_after=gmeta.total_candidates_after,
+            fallback_used=gmeta.fallback_used,
+            field_scope_effective=list(field_scope_effective),
+        )
+        scored_local: List[Tuple[JournalRow, Dict[str, float]]] = []
+        for j in gated:
+            s = total_score(paper, j)
+            s["fit"] = float(fit_map.get(j.title, s.get("fit", 0.0)))
+            scored_local.append((j, s))
+        scored_local.sort(key=lambda x: x[1]["total"], reverse=True)
+        return scored_local, gmeta
 
-    if args.rating_filter:
-        allowed = {x.strip() for x in args.rating_filter.split(",") if x.strip()}
-        scored = [x for x in scored if (x[0].ajg_2024 or "").strip() in allowed]
+    # Phase 1: normal gating.
+    scored, gmeta = build_ranked(candidate_topn=None)
+
+    # Apply rating filter (if any) and check TopK sufficiency.
+    rating_filter = (args.rating_filter or "").strip()
+    allowed = {x.strip() for x in rating_filter.split(",") if x.strip()} if rating_filter else set()
+    filtered = scored
+    if allowed:
+        filtered = [x for x in scored if (x[0].ajg_2024 or "").strip() in allowed]
+
+    # Phase 2 fallback: if filtered is too small, expand the gating candidate_topn.
+    # This keeps the same rating_filter, but looks at a wider topic-fit candidate pool.
+    if allowed and len(filtered) < int(args.topk):
+        expanded_topn = max(gmeta.candidate_topn * 2, gmeta.candidate_topn + 80, int(args.topk) * 20)
+        scored2, gmeta2 = build_ranked(candidate_topn=expanded_topn)
+        filtered2 = [x for x in scored2 if (x[0].ajg_2024 or "").strip() in allowed]
+        if len(filtered2) >= len(filtered):
+            scored = scored2
+            gmeta = gmeta2
+            filtered = filtered2
+
+    # Phase 3 fallback: if still too small, relax rating filter by adding the next lower tier.
+    # - easy (1,2) -> allow add 3
+    # - medium (2,3) -> allow add 1
+    # - hard (4,4*) -> allow add 3
+    if allowed and len(filtered) < int(args.topk):
+        extra = set()
+        if paper.mode == "easy":
+            extra = {"3"}
+        elif paper.mode == "medium":
+            extra = {"1"}
+        else:  # hard
+            extra = {"3"}
+        allowed2 = allowed | extra
+        filtered2 = [x for x in scored if (x[0].ajg_2024 or "").strip() in allowed2]
+        if len(filtered2) > len(filtered):
+            filtered = filtered2
+            allowed = allowed2
+
+    scored = filtered
 
     report = render_report(paper, scored, topk=args.topk, gating_meta=gmeta)
     print(report)
 
     if args.export_candidate_pool_json:
+        effective = ",".join(sorted(allowed)) if allowed else ""
         pool_obj = candidate_pool_to_dict(
             paper,
             args.ajg_csv,
@@ -685,6 +842,9 @@ def main() -> int:
             mode=args.mode,
             gating_meta=gmeta,
             rating_filter=args.rating_filter,
+            rating_filter_effective=effective,
+            field_scope_requested=requested_scope_raw,
+            field_scope_effective=field_scope_effective,
         )
         write_json(args.export_candidate_pool_json, pool_obj)
 

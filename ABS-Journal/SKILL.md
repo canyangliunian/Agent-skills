@@ -13,6 +13,12 @@ description: Use when a user asks to recommend target journals via a hybrid ABS/
 - 命令行示例默认使用 **项目根相对路径（assets/）**，仅在用户明确要求时使用绝对路径并注明基准。
 - 推荐流程为：脚本导出主题贴合候选池 → AI 仅在候选池内二次筛选 → 子集校验 → 三段固定列报告。
 
+## 参数职责（避免混淆）
+
+- `--field`：论文领域标签/关键词配置（默认 `ECON`）。**不控制候选期刊范围**。
+- `--field_scope`：候选期刊 Field 白名单（AJG CSV 的 `Field` 列；逗号分隔；精确匹配）。为空则使用默认白名单：
+  `ECON, FINANCE, PUB SEC, REGIONAL STUDIES, PLANNING AND ENVIRONMENT, SOC SCI`（共 5 个 Field；其中 `REGIONAL STUDIES, PLANNING AND ENVIRONMENT` 是一个整体 Field 名称）。
+
 ## Quick Start
 
 ### A) 校验 AI 输出并生成最终报告（固定列三段 Top10）
@@ -20,6 +26,7 @@ description: Use when a user asks to recommend target journals via a hybrid ABS/
 ```bash
 python3 scripts/abs_journal.py \
   recommend \
+  --field_scope "ECON,FINANCE,PUB SEC,REGIONAL STUDIES, PLANNING AND ENVIRONMENT,SOC SCI" \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
   --mode medium \
@@ -48,6 +55,8 @@ python3 scripts/ajg_fetch.py \
    - 若用户明确说“更新/重新抓取/刷新数据库”，走 **更新+（可选）推荐流程**。
 2) 混合推荐流程：
    - 读取本地 AJG CSV → 先构造“主题贴合候选池”并导出 JSON（满足 field/星级过滤等约束）。
+   - 候选期刊默认来自固定 Field 白名单：`ECON, FINANCE, PUB SEC, REGIONAL STUDIES, PLANNING AND ENVIRONMENT, SOC SCI`（可用 `--field_scope` 覆盖）。
+   - `--field` 仅作为论文领域标签/关键词配置，不控制候选范围。
    - AI **只能在候选池内** 输出三类 TopK（easy/medium/hard），并为每条补充 `期刊主题`（解释性摘要）。三类默认各 10 本且不重叠。
    - 脚本做 **候选池子集校验**（禁止候选池外期刊）；通过后生成固定列 Markdown 报告：
      `序号 | 期刊名 | ABS星级 | 期刊主题`。

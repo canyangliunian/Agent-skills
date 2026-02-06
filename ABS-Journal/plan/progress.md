@@ -14,6 +14,14 @@
 - 自测通过：
   - `python3 scripts/test_recommendation_gating.py`
   - `python3 scripts/test_hybrid_flow.py`
+- 根据用户新反馈增强“难度层次感”：在 `scripts/abs_journal.py` 为不同 `--mode` 默认注入星级过滤（easy=1,2；medium=2,3；hard=4,4*），用户显式传 `--rating_filter` 则覆盖默认。
+- 用用户提供论文信息做一次端到端分层测试（不启用 hybrid；TopK=10；field=ECON）：
+  - easy：输出命中星级分布：1×4 + 2×2（通过“混合比例”规则尝试引入 2，使 easy 不再全是 1；仍受主题贴合 gating 影响）
+  - medium：输出命中星级分布：2×3 + 3×1（通过“混合比例”规则尝试引入 3，使 medium 不再全是 2；仍受主题贴合 gating 影响）
+  - hard：在实现“TopK 不足回退”后，本例输出提升为 7 条（4*×2 + 4×5），但仍未补满 10；说明仅扩大 gating + 放宽星级一档仍可能不足，后续可继续考虑更激进回退（例如 hard 再放宽到 2，或允许跨领域/关闭 gating）。
+- 方案A（参数体验）：明确 `--field` 不控制候选范围，仅作为论文领域标签/关键词配置；默认候选期刊 Field 范围由内置 5 个 Field 白名单决定（可用 `--field_scope` 覆盖）。更新了 README/SKILL/references 文档与 CLI help。
+- 修复潜在严重误判：`parse_ajg_rating()` 对未知/空值不再默认映射为 4*，改为未评级（0）；报告中新增“未评级”分组（如出现）。
+- 测试补充：新增 `--field_scope` 非法值应报错并打印可选 Field 列表的断言；并改为覆盖“不传 `--field_scope` 参数”的默认行为。
 <!-- 
   WHAT: Your session log - a chronological record of what you did, when, and what happened.
   WHY: Answers "What have I done?" in the 5-Question Reboot Test. Helps you resume after breaks.
