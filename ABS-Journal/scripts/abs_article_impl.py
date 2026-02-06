@@ -9,7 +9,7 @@ It does NOT use external web resources; it relies only on the local AJG CSV.
 Inputs:
 - title (required)
 - abstract (optional)
-- mode (default: easy; options: easy/fit/value)
+- mode (default: easy; options: easy/medium/hard)
 
 Outputs:
 - a Markdown report to stdout
@@ -136,7 +136,7 @@ def domain_preference_bonus(paper: PaperProfile, journal: JournalRow) -> float:
     """偏好加分：贸易/农经/区经/金融/政策/政治经济 等应用方向。
 
     这是在“主题贴合候选集”前置筛选之后的轻量排序偏好，用于把更应用的期刊
-    往前推一点，避免方法刊在 value/fit 下过于靠前。
+    往前推一点，避免方法刊在高难度/中难度下过于靠前。
     """
 
     _ = paper
@@ -295,6 +295,14 @@ def value_score(ajg_2024: str) -> float:
 
 
 def total_score(paper: PaperProfile, journal: JournalRow) -> Dict[str, float]:
+    """Compute per-journal scores inside the topic-fit gated candidate pool.
+
+    New semantics:
+    - easy: 投稿难度最低（更稳妥/门槛更低）
+    - medium: 中等难度（折中）
+    - hard: 投稿难度最高（更偏高门槛/更“冲刺”）
+    """
+
     # Note: topic-fit gating happens before calling this function.
     f = fit_score(paper, journal)
     e = easiness_score(journal.ajg_2024)
@@ -303,11 +311,11 @@ def total_score(paper: PaperProfile, journal: JournalRow) -> Dict[str, float]:
     m = method_heaviness_penalty(paper, journal)
     d = domain_preference_bonus(paper, journal)
 
-    if paper.mode == "fit":
-        total = (10.0 * f) + (0.1 * e) - (0.2 * p) - (1.0 * m) + (2.0 * d)
-    elif paper.mode == "easy":
+    if paper.mode == "easy":
         total = (10.0 * e) + (0.1 * f) - (0.6 * p) - (0.6 * m) + (1.0 * d)
-    else:  # value
+    elif paper.mode == "medium":
+        total = (6.0 * f) + (6.0 * e) + (2.0 * v) - (0.6 * p) - (0.8 * m) + (2.0 * d)
+    else:  # hard
         total = (10.0 * v) + (0.2 * f) - (0.8 * p) - (0.8 * m) + (2.0 * d)
 
     return {"total": total, "easy": e, "value": v, "fit": f, "prestige_pen": p, "method_pen": m}
@@ -389,7 +397,7 @@ def render_report(
     lines.append("")
     lines.append(f"- 生成时间：{now_local_str()}")
     lines.append(f"- 论文领域：{paper.field}")
-    lines.append(f"- 模式：{paper.mode}")
+    lines.append(f"- 难度：{paper.mode}")
     lines.append("")
     lines.append("## 论文信息")
     lines.append("")
@@ -416,7 +424,7 @@ def render_report(
         buckets.setdefault(b, []).append((j, s))
 
     ordered_buckets = ["A 主投更易", "B 备投折中", "C 冲刺更高（4）", "C 冲刺更高（4*）"]
-    if paper.mode == "value":
+    if paper.mode == "hard":
         ordered_buckets = ["C 冲刺更高（4*）", "C 冲刺更高（4）", "B 备投折中", "A 主投更易"]
 
     for bucket in ordered_buckets:
@@ -622,7 +630,7 @@ def main() -> int:
     ap.add_argument("--field", default="ECON", help="论文领域（默认ECON）")
     ap.add_argument("--title", required=True, help="论文标题")
     ap.add_argument("--abstract", default="", help="论文摘要")
-    ap.add_argument("--mode", default="easy", choices=["easy", "fit", "value"], help="推荐模式：easy(易发表)/fit(主题匹配)/value(性价比)")
+    ap.add_argument("--mode", default="easy", choices=["easy", "medium", "hard"], help="投稿难度：easy(最容易)/medium(中等)/hard(最困难)")
     ap.add_argument("--topk", type=int, default=20, help="输出期刊数")
     ap.add_argument(
         "--profile",

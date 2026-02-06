@@ -76,7 +76,7 @@ def main() -> int:
                 "--field",
                 "ECON",
                 "--mode",
-                "fit",
+                "medium",
                 "--topk",
                 "10",
                 "--title",
@@ -93,7 +93,7 @@ def main() -> int:
         j = pick_first(pool_path)
         topk = 10
         items = [{"journal": j, "topic": f"mock topic {i}"} for i in range(1, topk + 1)]
-        ai_obj = {"fit": items, "easy": items, "value": items}
+        ai_obj = {"easy": items, "medium": items, "hard": items}
         with open(ai_path, "w", encoding="utf-8") as f:
             json.dump(ai_obj, f, ensure_ascii=False, indent=2)
 
@@ -110,7 +110,7 @@ def main() -> int:
             f.write(proc.stdout)
 
         text = proc.stdout
-        for key in ["Fit Top10", "Easy Top10", "Value Top10", "序号", "期刊名", "ABS星级", "期刊主题"]:
+        for key in ["Easy Top10", "Medium Top10", "Hard Top10", "序号", "期刊名", "ABS星级", "期刊主题"]:
             if key not in text:
                 raise RuntimeError(f"missing in report: {key}")
 

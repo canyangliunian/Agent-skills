@@ -18,7 +18,7 @@
   WHAT: Which phase you're currently working on (e.g., "Phase 1", "Phase 3").
   WHY: Quick reference for where you are in the task. Update this as you progress.
 -->
-Phase 1（扫描硬编码路径与入口点）
+Phase 1（扫描硬编码路径与入口点；并行调整三难度语义）
 
 ## Phases
 <!-- 
@@ -35,6 +35,7 @@ Phase 1（扫描硬编码路径与入口点）
 - [ ] 汇总现有目录结构与运行入口
 - [ ] 全仓扫描绝对路径/家目录写死/开发机路径
 - [ ] 记录“必须可配置”的路径清单（脚本/数据/缓存/输出）
+- [x] 按用户要求调整三模式语义为投稿难度（easy/medium/hard）
 - **Status:** in_progress
 <!-- 
   STATUS VALUES:

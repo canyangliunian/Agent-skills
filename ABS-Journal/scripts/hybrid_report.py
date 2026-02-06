@@ -42,7 +42,7 @@ def build_index(pool: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
 
 def build_index_multi(pool_multi: Dict[str, Any]) -> Dict[str, Dict[str, Dict[str, Any]]]:
     out: Dict[str, Dict[str, Dict[str, Any]]] = {}
-    for bucket in ["fit", "easy", "value"]:
+    for bucket in ["easy", "medium", "hard"]:
         pool = pool_multi.get(bucket) or {}
         if not isinstance(pool, dict):
             continue
@@ -52,7 +52,7 @@ def build_index_multi(pool_multi: Dict[str, Any]) -> Dict[str, Dict[str, Dict[st
 
 def normalize_ai(ai: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
     out: Dict[str, List[Dict[str, Any]]] = {}
-    for bucket in ["fit", "easy", "value"]:
+    for bucket in ["easy", "medium", "hard"]:
         items = ai.get(bucket) or []
         if not isinstance(items, list):
             raise RuntimeError(f"{bucket}: AI 输出必须是 list")
@@ -109,7 +109,7 @@ def extract_meta(pool: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def is_multi_pool(obj: Dict[str, Any]) -> bool:
-    return any(k in obj for k in ["fit", "easy", "value"])
+    return any(k in obj for k in ["easy", "medium", "hard"])
 
 
 def render_report(
@@ -119,14 +119,14 @@ def render_report(
     topk: int,
 ) -> str:
     if is_multi_pool(pool):
-        meta_fit = extract_meta(pool.get("fit") or {})
         meta_easy = extract_meta(pool.get("easy") or {})
-        meta_value = extract_meta(pool.get("value") or {})
+        meta_medium = extract_meta(pool.get("medium") or {})
+        meta_hard = extract_meta(pool.get("hard") or {})
         idx_multi = build_index_multi(pool)
-        meta = meta_fit
+        meta = meta_medium or meta_easy or meta_hard
     else:
         meta = extract_meta(pool)
-        idx_multi = {"fit": build_index(pool), "easy": build_index(pool), "value": build_index(pool)}
+        idx_multi = {"easy": build_index(pool), "medium": build_index(pool), "hard": build_index(pool)}
     ai_norm = normalize_ai(ai)
 
     lines: List[str] = []
@@ -135,8 +135,8 @@ def render_report(
     lines.append("## 可追溯信息")
     lines.append("")
     if is_multi_pool(pool):
-        lines.append("- 候选池形态：fit/easy/value 多池（每段各自星级过滤与排序）")
-        for label, m in [("Fit", meta_fit), ("Easy", meta_easy), ("Value", meta_value)]:
+        lines.append("- 候选池形态：easy/medium/hard 多池（每段各自星级过滤与排序）")
+        for label, m in [("Easy", meta_easy), ("Medium", meta_medium), ("Hard", meta_hard)]:
             if not m:
                 continue
             lines.append(f"- {label}：AJG CSV={m.get('ajg_csv')}；星级过滤={m.get('rating_filter')}；规模={m.get('count')}")
@@ -146,7 +146,7 @@ def render_report(
         if meta.get("ajg_csv"):
             lines.append(f"- AJG CSV：{meta.get('ajg_csv')}")
         if meta.get("mode"):
-            lines.append(f"- 候选池模式：{meta.get('mode')}")
+            lines.append(f"- 候选池难度：{meta.get('mode')}")
         if meta.get("rating_filter"):
             lines.append(f"- 星级过滤：{meta.get('rating_filter')}")
         gating = meta.get("gating")
@@ -165,9 +165,9 @@ def render_report(
     lines.append("")
     lines.append("## 推荐清单（固定列）")
     lines.append("")
-    lines.append(render_table("Fit Top10", ai_norm["fit"], idx_multi.get("fit") or {}, topk))
     lines.append(render_table("Easy Top10", ai_norm["easy"], idx_multi.get("easy") or {}, topk))
-    lines.append(render_table("Value Top10", ai_norm["value"], idx_multi.get("value") or {}, topk))
+    lines.append(render_table("Medium Top10", ai_norm["medium"], idx_multi.get("medium") or {}, topk))
+    lines.append(render_table("Hard Top10", ai_norm["hard"], idx_multi.get("hard") or {}, topk))
     lines.append("## 说明")
     lines.append("")
     lines.append("- `期刊主题` 为 AI 解释性摘要，用于解释与论文主题的匹配关系；不是期刊官方 Aims&Scope。")

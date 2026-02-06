@@ -22,11 +22,11 @@ python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
-  --mode fit \
+  --mode medium \
   --topk 10 \
   --rating_filter "1,2,3" \
   --hybrid \
-  --export_candidate_pool_json "assets/candidate_pool_fit.json" \
+  --export_candidate_pool_json "assets/candidate_pool.json" \
   --ai_output_json "assets/ai_output.json" \
   --hybrid_report_md "assets/hybrid_report.md"
 ```
@@ -48,7 +48,7 @@ python3 scripts/ajg_fetch.py \
    - 若用户明确说“更新/重新抓取/刷新数据库”，走 **更新+（可选）推荐流程**。
 2) 混合推荐流程：
    - 读取本地 AJG CSV → 先构造“主题贴合候选池”并导出 JSON（满足 field/星级过滤等约束）。
-   - AI **只能在候选池内** 输出三类 TopK（fit/easy/value），并为每条补充 `期刊主题`（解释性摘要）。
+   - AI **只能在候选池内** 输出三类 TopK（easy/medium/hard），并为每条补充 `期刊主题`（解释性摘要）。三类默认各 10 本且不重叠。
    - 脚本做 **候选池子集校验**（禁止候选池外期刊）；通过后生成固定列 Markdown 报告：
      `序号 | 期刊名 | ABS星级 | 期刊主题`。
 3) 更新流程：

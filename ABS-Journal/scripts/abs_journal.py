@@ -12,7 +12,7 @@ Only update when explicitly requested:
 Examples (portable; absolute paths can be derived at runtime):
   # Recommend (default)
   python3 scripts/abs_journal.py \\
-    recommend --title "..." --abstract "..." --mode fit
+    recommend --title "..." --abstract "..." --mode medium
 
   # Update then recommend
   export AJG_EMAIL="lingguiwang@yeah.net"
@@ -51,6 +51,17 @@ def resolve_inside_skill(path: str, *, base_dir: str) -> str:
     return os.path.abspath(os.path.join(base_dir, path))
 
 
+def strip_leading_dirs(path: str, *dirs: str) -> str:
+    p = path.replace("\\", "/")
+    for d in dirs:
+        d2 = d.strip("/").replace("\\", "/")
+        if not d2:
+            continue
+        if p.startswith(d2 + "/"):
+            return p[len(d2) + 1 :]
+    return path
+
+
 def run_py(script_rel: str, argv: List[str]) -> int:
     script = os.path.join(SKILL_ROOT, script_rel)
     if not os.path.isfile(script):
@@ -75,8 +86,8 @@ def main() -> int:
     ap_rec.add_argument("--title", required=True, help="论文标题")
     ap_rec.add_argument("--abstract", default="", help="论文摘要")
     ap_rec.add_argument("--field", default="ECON", help="论文领域（默认ECON）")
-    ap_rec.add_argument("--mode", default="easy", choices=["easy", "fit", "value"], help="推荐模式")
-    ap_rec.add_argument("--topk", type=int, default=20, help="输出期刊数")
+    ap_rec.add_argument("--mode", default="easy", choices=["easy", "medium", "hard"], help="投稿难度：easy(最容易)/medium(中等)/hard(最困难)")
+    ap_rec.add_argument("--topk", type=int, default=10, help="每个难度输出期刊数（默认10）")
     ap_rec.add_argument(
         "--export_candidate_pool_json",
         default="",
@@ -136,42 +147,68 @@ def main() -> int:
         # Default local file in this repo. If you updated to a newer year,
         # pass --ajg_csv explicitly via direct call to abs_article_impl.py,
         # or update this mapping later.
-        export_json = resolve_inside_skill(args.export_candidate_pool_json, base_dir=DEFAULT_EXPORT_DIR) if args.export_candidate_pool_json else ""
+        raw_export = (args.export_candidate_pool_json or "").strip()
+        raw_export = strip_leading_dirs(raw_export, "assets")
+        export_json = resolve_inside_skill(raw_export, base_dir=DEFAULT_EXPORT_DIR) if raw_export else ""
         if args.hybrid and not export_json:
             raise RuntimeError("--hybrid 需要同时提供 --export_candidate_pool_json（候选池 JSON 输出路径）")
 
-        rec_args = [
-            "--ajg_csv",
-            os.path.join(data_dir, "ajg_2024_journals_core_custom.csv"),
-            "--title",
-            args.title,
-            "--abstract",
-            args.abstract,
-            "--field",
-            args.field,
-            "--mode",
-            args.mode,
-            "--topk",
-            str(args.topk),
-            "--export_candidate_pool_json",
-            export_json,
-            "--rating_filter",
-            args.rating_filter,
-        ]
-        returncode = run_py("scripts/abs_article_impl.py", rec_args)
-        if returncode != 0:
-            return returncode
+        modes = ["easy", "medium", "hard"]
+        if args.mode and args.mode not in modes:
+            raise RuntimeError(f"非法 --mode: {args.mode}（允许：easy/medium/hard）")
+
+        # Default: always generate a theme-fit candidate pool first (mode-agnostic gating),
+        # then rank within that pool for each difficulty bucket.
+        selected_modes = modes if args.hybrid else [args.mode]
+        if not selected_modes or any(m not in modes for m in selected_modes):
+            raise RuntimeError("内部错误：selected_modes 为空或包含非法值")
+
+        multi_pool = bool(args.hybrid)
+        export_json_list = []
+        if multi_pool:
+            if not export_json:
+                raise RuntimeError("--hybrid 需要同时提供 --export_candidate_pool_json（候选池 JSON 输出路径）")
+            base, ext = os.path.splitext(export_json)
+            export_json_list = [f"{base}_{m}{ext or '.json'}" for m in selected_modes]
+        else:
+            export_json_list = [export_json] if export_json else [""]
+
+        for m, out_json in zip(selected_modes, export_json_list):
+            rec_args = [
+                "--ajg_csv",
+                os.path.join(data_dir, "ajg_2024_journals_core_custom.csv"),
+                "--title",
+                args.title,
+                "--abstract",
+                args.abstract,
+                "--field",
+                args.field,
+                "--mode",
+                m,
+                "--topk",
+                str(args.topk),
+                "--export_candidate_pool_json",
+                out_json,
+                "--rating_filter",
+                args.rating_filter,
+            ]
+            returncode = run_py("scripts/abs_article_impl.py", rec_args)
+            if returncode != 0:
+                return returncode
 
         if not args.hybrid:
             return 0
 
         # Validate AI output (manual step) if provided.
         if args.ai_output_json:
+            if not export_json_list or any((not p) for p in export_json_list):
+                raise RuntimeError("混合流程需要候选池 JSON 输出（请提供 --export_candidate_pool_json）")
+            pool_arg = export_json_list if multi_pool else export_json_list[0]
             returncode = run_py(
                 "scripts/abs_ai_review.py",
                 [
                     "--candidate_pool_json",
-                    export_json,
+                    pool_arg if isinstance(pool_arg, str) else pool_arg[0],
                     "--ai_output_json",
                     resolve_inside_skill(args.ai_output_json, base_dir=DEFAULT_EXPORT_DIR),
                     "--topk",
@@ -186,12 +223,13 @@ def main() -> int:
                 os.makedirs(os.path.dirname(out_md) or ".", exist_ok=True)
                 import subprocess
 
+                pool_for_report = pool_arg if isinstance(pool_arg, str) else pool_arg[0]
                 proc = subprocess.run(
                     [
                         sys.executable,
                         os.path.join(SKILL_ROOT, "scripts", "hybrid_report.py"),
                         "--candidate_pool_json",
-                        export_json,
+                        pool_for_report,
                         "--ai_output_json",
                         resolve_inside_skill(args.ai_output_json, base_dir=DEFAULT_EXPORT_DIR),
                         "--topk",

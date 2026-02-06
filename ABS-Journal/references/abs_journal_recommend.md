@@ -5,7 +5,7 @@
 
 ## 何时使用（默认路径）
 
-- ✅ 用户说：帮我推荐投稿期刊/目标期刊/根据论文选期刊/给出 easy/fit/value 的推荐
+- ✅ 用户说：帮我推荐投稿期刊/目标期刊/根据论文选期刊/给出 easy/medium/hard 的推荐
 - ✅ 用户没有明确要求更新数据库（此时必须只用本地数据）
 
 ## 不做什么（强约束）
@@ -23,14 +23,14 @@
 python3 scripts/abs_journal.py recommend -h
 ```
 
-### 最常用：按主题匹配（fit）
+### 最常用：按难度（默认 easy）
 
 ```bash
 python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
-  --mode fit \
+  --mode easy \
   --topk 20
 ```
 
@@ -43,14 +43,14 @@ python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
-  --mode fit \
+  --mode easy \
   --topk 20 \
   --rating_filter "1,2,3"
 ```
 
 ## 混合流程（脚本候选池 → AI 二次筛选 → 子集校验 → 固定列报告）
 
-当你希望 **fit/easy/value 三类都先过“主题贴合候选集”**，再让 AI 在候选池内精挑 Top10，并输出固定列：
+当你希望 **easy/medium/hard 三个难度都先过“主题贴合候选集”**，再让 AI 在候选池内精挑 Top10，并输出固定列：
 
 `序号 | 期刊名 | ABS星级 | 期刊主题`
 
@@ -68,14 +68,14 @@ python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
-  --mode fit \
+  --mode medium \
   --topk 10 \
   --rating_filter "1,2,3" \
   --hybrid \
-  --export_candidate_pool_json "/tmp/candidate_pool_fit.json"
+  --export_candidate_pool_json "/tmp/candidate_pool.json"
 ```
 
-你也可以分别为三类生成候选池（便于套用用户的星级约束，例如 fit=1/2/3、easy=1/2、value=3/4/4*）：
+你也可以分别为三类生成候选池（便于套用用户的星级约束，例如 easy=1/2、medium=1/2/3、hard=3/4/4*）：
 
 ```bash
 python3 scripts/abs_journal.py \
@@ -92,11 +92,11 @@ python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
-  --mode value \
+  --mode hard \
   --topk 10 \
   --rating_filter "3,4,4*" \
   --hybrid \
-  --export_candidate_pool_json "/tmp/candidate_pool_value.json"
+  --export_candidate_pool_json "/tmp/candidate_pool_hard.json"
 ```
 
 ### Step 2：把候选池交给 AI 二次筛选（模板）
@@ -113,9 +113,9 @@ AI 输出 JSON 约定（必须包含三组且各 ≥ TopK=10）：
 
 ```json
 {
-  "fit": [{"journal": "...", "topic": "..."}],
   "easy": [{"journal": "...", "topic": "..."}],
-  "value": [{"journal": "...", "topic": "..."}]
+  "medium": [{"journal": "...", "topic": "..."}],
+  "hard": [{"journal": "...", "topic": "..."}]
 }
 ```
 
@@ -126,22 +126,22 @@ python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
   --abstract "你的摘要（可选）" \
-  --mode fit \
+  --mode medium \
   --topk 10 \
   --rating_filter "1,2,3" \
   --hybrid \
-  --export_candidate_pool_json "assets/candidate_pool_fit.json" \
+  --export_candidate_pool_json "assets/candidate_pool.json" \
   --ai_output_json "assets/ai_output.json" \
   --hybrid_report_md "assets/hybrid_report.md"
 ```
 
 注意：
 - 若 AI 输出包含候选池之外的期刊名，校验会失败并提示具体条目，必须让 AI 重试（禁止悄悄替换）。
-- 若缺少 fit/easy/value 任一键，或任一组少于 TopK=10 条，或 topic 为空，将直接报错退出。
+- 若缺少 easy/medium/hard 任一键，或任一组少于 TopK=10 条，或 topic 为空，将直接报错退出。
 - `期刊主题` 为 AI 解释性摘要，用于解释与论文主题的匹配关系；不是期刊官方 Aims&Scope。
 
 建议输出路径（相对项目根，便于留存与复现）：
-- 候选池：`assets/candidate_pool_fit.json`
+- 候选池：`assets/candidate_pool.json`
 - AI 输出：`assets/ai_output.json`
 - 报告：`assets/hybrid_report.md`
 
@@ -151,10 +151,10 @@ python3 scripts/abs_journal.py \
 
 - `--title TITLE`：**必填**，论文标题
 - `--abstract ABSTRACT`：可选，论文摘要
-- `--mode {easy,fit,value}`：推荐模式
-  - `easy`：偏“易发表”（更稳妥/门槛更低的启发式）
-  - `fit`：偏“主题匹配”
-  - `value`：偏“性价比”
+- `--mode {easy,medium,hard}`：投稿难度
+  - `easy`：最容易（更稳妥/门槛更低的启发式）
+  - `medium`：中等难度（折中）
+  - `hard`：最困难（更偏高门槛/更“冲刺”）
 - `--topk TOPK`：输出期刊数
 - `--field FIELD`：论文领域（默认 `ECON`）
 - `--rating_filter "1,2,3"`：AJG/ABS 星级过滤（逗号分隔，支持 `4*`）

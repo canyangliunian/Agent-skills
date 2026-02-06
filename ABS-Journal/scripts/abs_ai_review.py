@@ -9,7 +9,7 @@ is strictly a subset of the candidate pool exported by abs_article_impl.py.
 Usage (example):
   python3 /ABS_JOURNAL_HOME/scripts/abs_article_impl.py \\
     --ajg_csv /ABS_JOURNAL_HOME/assets/data/ajg_2024_journals_core_custom.csv \\
-    --field ECON --profile general --mode fit --topk 200 \\
+    --field ECON --profile general --mode medium --topk 200 \\
     --title \"...\" --abstract \"...\" \\
     --export_candidate_pool_json /tmp/candidate_pool.json
 
@@ -38,7 +38,7 @@ def load_json(path: str) -> Dict[str, Any]:
 
 def validate_subset(candidate_pool: Dict[str, Any], ai_output: Dict[str, Any], topk: int) -> List[str]:
     """Validate AI output against candidate pool with tri-mode requirements."""
-    modes = ["fit", "easy", "value"]
+    modes = ["easy", "medium", "hard"]
 
     # Build allowed journals per mode (supports single-pool or per-mode pools)
     if any(k in candidate_pool for k in modes):
@@ -86,7 +86,7 @@ def validate_subset(candidate_pool: Dict[str, Any], ai_output: Dict[str, Any], t
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--candidate_pool_json", required=True, help="候选池 JSON（绝对路径；可为单池或 fit/easy/value 多池）")
+    ap.add_argument("--candidate_pool_json", required=True, help="候选池 JSON（绝对路径；可为单池或 easy/medium/hard 多池）")
     ap.add_argument("--ai_output_json", required=True, help="AI 输出 JSON（绝对路径）")
     ap.add_argument("--topk", type=int, default=10, help="每个模式至少需要的条目数（默认 10）")
     args = ap.parse_args()

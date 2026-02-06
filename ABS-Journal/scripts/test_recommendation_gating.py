@@ -44,7 +44,7 @@ def run(mode: str, abstract: str) -> str:
 
 
 def main() -> int:
-    for mode in ["fit", "easy", "value"]:
+    for mode in ["easy", "medium", "hard"]:
         out = run(mode, abstract="We study tariff shocks and public attitudes toward trade using surveys.")
         assert "## 候选集（主题贴合）" in out, f"missing gating section for mode={mode}"
         assert "已对所有模式启用“主题贴合候选集”前置筛选" in out, f"missing gating note for mode={mode}"

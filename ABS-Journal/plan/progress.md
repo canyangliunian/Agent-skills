@@ -6,6 +6,14 @@
 - 扫描发现硬编码路径主要集中在文档/示例命令；脚本中也有少量 docstring 示例与 1 处遗留变量（`abs_article_impl.py` 内 `SKILL_ROOT` 未定义）触发测试失败。
 - 新增路径工具 `scripts/abs_paths.py`，通过环境变量覆盖 + 自动向上探测 `SKILL.md` 来解析 `skill_root/data_dir`。
 - 运行 `python3 scripts/test_hybrid_flow.py` 通过（修复 `SKILL_ROOT` + mock AI 输出满足 TopK）。
+
+## 2026-02-06
+- 将三模式语义从 `easy/fit/value` 调整为投稿难度 `easy/medium/hard`，并统一 TopK 默认=10。
+- 更新混合流程相关脚本：AI 输出校验与报告生成均改为检查 `easy/medium/hard` 三键。
+- 更新文档与模板：`SKILL.md`、`references/abs_journal_recommend.md`、`scripts/ai_second_pass_template.md`。
+- 自测通过：
+  - `python3 scripts/test_recommendation_gating.py`
+  - `python3 scripts/test_hybrid_flow.py`
 <!-- 
   WHAT: Your session log - a chronological record of what you did, when, and what happened.
   WHY: Answers "What have I done?" in the 5-Question Reboot Test. Helps you resume after breaks.
