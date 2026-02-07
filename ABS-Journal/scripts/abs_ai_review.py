@@ -64,6 +64,17 @@ def validate_subset(candidate_pool: Dict[str, Any], ai_output: Dict[str, Any], t
     """Validate AI output against candidate pool with tri-mode requirements."""
     modes = ["easy", "medium", "hard"]
 
+    # Allow passing ai_output.json directly as --candidate_pool_json when it embeds pools.
+    # This supports the offline --auto_ai path: we pick from per-mode pools and validate
+    # against the corresponding per-mode membership set.
+    if isinstance(ai_output, dict) and isinstance(ai_output.get("candidate_pool_by_mode"), dict):
+        pools = ai_output["candidate_pool_by_mode"]
+        candidate_pool = {
+            "easy": pools.get("easy") or {},
+            "medium": pools.get("medium") or {},
+            "hard": pools.get("hard") or {},
+        }
+
     # Build allowed journals per mode (supports single-pool or per-mode pools)
     if any(k in candidate_pool for k in modes):
         allowed_by_bucket: Dict[str, set] = {}

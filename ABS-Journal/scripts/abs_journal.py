@@ -105,6 +105,8 @@ def _select_topk_from_pools(export_json_list: List[str], *, topk: int) -> dict:
     if not pools:
         raise RuntimeError("未找到候选池 JSON（请先生成候选池）")
 
+    modes = ["easy", "medium", "hard"]
+
     by_mode = {}
     for pool in pools:
         meta = (pool or {}).get("meta") or {}
@@ -161,12 +163,16 @@ def _select_topk_from_pools(export_json_list: List[str], *, topk: int) -> dict:
             raise RuntimeError(f"--auto_ai 生成失败：{mode} 仅选到 {len(out)}/{topk}（候选池不足或重复过多）")
         return out
 
-    return {
-        "easy": pick_unique("easy"),
-        "medium": pick_unique("medium"),
-        "hard": pick_unique("hard"),
-        "meta": {"generated_by": "abs_journal.py --auto_ai"},
-    }
+    ai_obj = {m: pick_unique(m) for m in modes}
+
+    # If we were given multiple pools (easy/medium/hard), embed them so that
+    # subset validation can correctly validate per-bucket membership.
+    multi_pool = len(pools) > 1 or any(k in by_mode for k in modes)
+    if multi_pool:
+        ai_obj["candidate_pool_by_mode"] = {m: (by_mode.get(m) or {}) for m in modes}
+
+    ai_obj["meta"] = {"generated_by": "abs_journal.py --auto_ai"}
+    return ai_obj
 
 
 def main() -> int:
@@ -338,7 +344,7 @@ def main() -> int:
                 "scripts/abs_ai_review.py",
                 [
                     "--candidate_pool_json",
-                    pool_arg if isinstance(pool_arg, str) else pool_arg[0],
+                    ai_output_path if args.auto_ai else (pool_arg if isinstance(pool_arg, str) else pool_arg[0]),
                     "--ai_output_json",
                     ai_output_path,
                     "--topk",

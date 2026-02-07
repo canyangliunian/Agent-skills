@@ -1,4 +1,4 @@
-﻿# 投稿期刊推荐（基于本地 AJG 数据）
+# 投稿期刊推荐（基于本地 AJG 数据）
 
 本文档用于指导默认的“**不更新数据库**”投稿期刊推荐流程：  
 推荐脚本会读取本地 AJG 核心 CSV（默认在 `assets/data/`），并输出推荐结果。
@@ -23,32 +23,7 @@
 python3 scripts/abs_journal.py recommend -h
 ```
 
-### 最常用：按难度（默认 easy）
-
-```bash
-python3 scripts/abs_journal.py \
-  recommend \
-  --title "你的论文标题" \
-  --abstract "你的摘要（可选）" \
-  --mode easy \
-  --topk 20
-```
-
-### 星级过滤（可选）
-
-按用户偏好限制 ABS/AJG 星级范围（逗号分隔，支持 `4*`）：
-
-```bash
-python3 scripts/abs_journal.py \
-  recommend \
-  --title "你的论文标题" \
-  --abstract "你的摘要（可选）" \
-  --mode easy \
-  --topk 20 \
-  --rating_filter "1,2,3"
-```
-
-## 混合流程（脚本候选池 → AI 二次筛选 → 子集校验 → 固定列报告）
+## 工作流程
 
 当你希望 **easy/medium/hard 三个难度都先过“主题贴合候选集”**，再让 AI 在候选池内精挑 Top10，并输出固定列：
 
@@ -61,21 +36,7 @@ python3 scripts/abs_journal.py \
 
 ### Step 1：生成候选池 JSON（不联网）
 
-下面示例生成候选池，并把候选池写到一个 JSON 文件（绝对路径）：
-
-```bash
-python3 scripts/abs_journal.py \
-  recommend \
-  --title "你的论文标题" \
-  --abstract "你的摘要（可选）" \
-  --mode medium \
-  --topk 10 \
-  --rating_filter "1,2,3" \
-  --hybrid \
-  --export_candidate_pool_json "/tmp/candidate_pool.json"
-```
-
-你也可以分别为三类生成候选池（便于套用用户的星级约束，例如 easy=1/2、medium=1/2/3、hard=3/4/4*）：
+分别为三类难度生成候选池（便于套用用户的星级约束，例如 easy=1/2、medium=1/2/3、hard=3/4/4*）：
 
 ```bash
 python3 scripts/abs_journal.py \
@@ -86,7 +47,17 @@ python3 scripts/abs_journal.py \
   --topk 10 \
   --rating_filter "1,2" \
   --hybrid \
-  --export_candidate_pool_json "/tmp/candidate_pool_easy.json"
+  --export_candidate_pool_json "reports/candidate_pool_easy.json"
+  
+python3 scripts/abs_journal.py \
+  recommend \
+  --title "你的论文标题" \
+  --abstract "你的摘要（可选）" \
+  --mode medium \
+  --topk 10 \
+  --rating_filter "1,2,3" \
+  --hybrid \
+  --export_candidate_pool_json "reports/candidate_pool_medium.json"
 
 python3 scripts/abs_journal.py \
   recommend \
@@ -96,7 +67,7 @@ python3 scripts/abs_journal.py \
   --topk 10 \
   --rating_filter "3,4,4*" \
   --hybrid \
-  --export_candidate_pool_json "/tmp/candidate_pool_hard.json"
+  --export_candidate_pool_json "reports/candidate_pool_hard.json"
 ```
 
 ### Step 2：把候选池交给 AI 二次筛选（模板）
@@ -139,6 +110,14 @@ python3 scripts/abs_journal.py \
 - 若 AI 输出包含候选池之外的期刊名，校验会失败并提示具体条目，必须让 AI 重试（禁止悄悄替换）。
 - 若缺少 easy/medium/hard 任一键，或任一组少于 TopK=10 条，或 topic 为空，将直接报错退出。
 - `期刊主题` 为 AI 解释性摘要，用于解释与论文主题的匹配关系；不是期刊官方 Aims&Scope。
+
+重要说明（避免你这次发现的“又重新跑了一次 medium”的误解）：
+- `--hybrid` 模式下，脚本会**一次性生成 easy/medium/hard 三个候选池**，文件名为：
+  - `reports/candidate_pool_easy.json`
+  - `reports/candidate_pool_medium.json`
+  - `reports/candidate_pool_hard.json`
+- Step 2/Step 3 的 AI 二次筛选与校验，应当分别在这三个候选池的范围内进行（即 easy 只能从 easy 池选，依此类推）。
+- 如果你只把其中一个候选池（例如 easy 或 medium）交给 AI，那么 AI 输出的另外两组（medium/hard）会在子集校验时失败。
 
 建议输出路径（固定输出目录：`reports/`，便于留存与复现）：
 - 候选池：`reports/candidate_pool_easy.json` / `reports/candidate_pool_medium.json` / `reports/candidate_pool_hard.json`

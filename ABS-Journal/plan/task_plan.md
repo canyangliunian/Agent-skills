@@ -18,7 +18,7 @@
   WHAT: Which phase you're currently working on (e.g., "Phase 1", "Phase 3").
   WHY: Quick reference for where you are in the task. Update this as you progress.
 -->
-Phase 1（定位报告生成逻辑与列定义）
+Phase 2（修复混合流程三候选池贯通）
 
 ## Phases
 <!-- 
@@ -34,7 +34,7 @@ Phase 1（定位报告生成逻辑与列定义）
 -->
 - [ ] 确认最终报告由哪个脚本生成（`scripts/hybrid_report.py`）
 - [ ] 确认当前报告列顺序与字段映射来源（期刊名/星级/Field）
-- **Status:** in_progress
+- **Status:** complete
 <!-- 
   STATUS VALUES:
   - pending: Not started yet
@@ -47,18 +47,18 @@ Phase 1（定位报告生成逻辑与列定义）
   WHAT: Decide how you'll approach the problem and what structure you'll use.
   WHY: Good planning prevents rework. Document decisions so you remember why you chose them.
 -->
-- [ ] 修改 `scripts/hybrid_report.py` 输出列为：序号，期刊名，ABS星级，Field
-- [ ] 若 `ai_output.json` 中缺少 Field，则从候选池映射补齐
-- **Status:** pending
+- [x] 修复混合流程：AI 二次筛选/子集校验/报告生成必须基于 Step1 生成的 easy/medium/hard 三候选池
+- [x] 保持对“单候选池”输入的兼容（历史用法不破坏）
+- **Status:** complete
 
 ### Phase 3: Testing & Verification（最小自测）
 <!-- 
   WHAT: Actually build/create/write the solution.
   WHY: This is where the work happens. Break into smaller sub-tasks if needed.
 -->
-- [ ] 运行一次 `--hybrid --auto_ai --ai_report_md ...` 生成报告
-- [ ] 检查 `assets/hybrid_report.md` 表头与列顺序是否符合要求
-- **Status:** pending
+- [x] 运行一次 `--hybrid --auto_ai --ai_report_md ...` 生成报告（TopK=2 即可）
+- [x] 检查 `reports/ai_report.md` 三段的 `ABS星级/Field` 是否均能填充
+- **Status:** complete
 
 ### Phase 4: Delivery（更新说明）
 <!-- 

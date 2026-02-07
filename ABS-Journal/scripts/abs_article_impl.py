@@ -363,7 +363,31 @@ def load_ajg_csv(path: str) -> List[JournalRow]:
 
 
 def parse_field_scope(raw: str) -> List[str]:
-    return [x.strip() for x in (raw or "").split(",") if x.strip()]
+    # NOTE:
+    # AJG CSV 的 Field 列里存在带逗号的单个 Field 值，例如：
+    # "REGIONAL STUDIES, PLANNING AND ENVIRONMENT"
+    # 但 CLI 约定又使用逗号分隔多个 Field。为兼容默认值与用户输入，
+    # 这里对该特殊 Field 做一次合并修复：
+    #   "REGIONAL STUDIES, PLANNING AND ENVIRONMENT" -> 单个 token
+    parts = [x.strip() for x in (raw or "").split(",") if x.strip()]
+    if not parts:
+        return []
+
+    merged: List[str] = []
+    i = 0
+    while i < len(parts):
+        cur = parts[i]
+        if (
+            cur.upper() == "REGIONAL STUDIES"
+            and i + 1 < len(parts)
+            and parts[i + 1].upper() == "PLANNING AND ENVIRONMENT"
+        ):
+            merged.append("REGIONAL STUDIES, PLANNING AND ENVIRONMENT")
+            i += 2
+            continue
+        merged.append(cur)
+        i += 1
+    return merged
 
 
 def narrow_candidates_by_journal_title(

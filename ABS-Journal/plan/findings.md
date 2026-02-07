@@ -43,6 +43,12 @@
 <!-- Key discoveries during exploration -->
 - 代码层面：多数脚本已通过 `__file__` 推导 `SKILL_ROOT`，但仍有残留“文档字符串里的绝对路径示例”以及少量硬编码/遗留变量引用（本次修复中遇到 `abs_article_impl.py` 的 `SKILL_ROOT` 未定义问题）。
 - 文档层面：`README.md`、`SKILL.md`、`references/*.md`、`assets/*.md` 多处包含机器相关绝对路径（`/Users/...`），需要统一改成“相对路径（基准为项目根）”或“占位路径 + 环境变量说明”。
+- 2026-02-07 用户反馈的工作流理解问题：Step1 已生成 easy/medium/hard 三类候选池，但后续校验/报告看起来没用上三池（见下方“混合流程候选池”条目）。
+
+## 混合流程候选池（2026-02-07）
+- 现象：在 `references/abs_journal_recommend.md` 的 Step 1 已生成 easy/medium/hard 三个候选池后，Step 3 的单次命令仍用 `--mode medium`，容易让人误以为“只跑了 medium / 没基于三池选”，且在离线 `--auto_ai` 路径下会导致子集校验失败（因为 medium/hard 的选择不在 easy 的候选池里）。
+- 根因（代码）：`scripts/abs_journal.py --hybrid` 确实会导出三份候选池（`*_easy.json/*_medium.json/*_hard.json`），但 `scripts/abs_ai_review.py` 与 `scripts/hybrid_report.py` 的接口长期假设“单候选池”，从而无法对 easy/medium/hard 分 bucket 做 membership 校验与字段填充。
+- 修复策略：离线 `--auto_ai` 生成 `ai_output.json` 时，把三份候选池嵌入 `candidate_pool_by_mode`；随后校验脚本允许把 `ai_output.json` 自己作为候选池来源；报告脚本也从 `candidate_pool_by_mode` 取对应 bucket 的候选信息来补齐 `ABS星级/Field`。
 
 ## Technical Decisions
 <!-- 

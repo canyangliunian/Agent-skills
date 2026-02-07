@@ -22,6 +22,14 @@
 - 方案A（参数体验）：明确 `--field` 不控制候选范围，仅作为论文领域标签/关键词配置；默认候选期刊 Field 范围由内置 5 个 Field 白名单决定（可用 `--field_scope` 覆盖）。更新了 README/SKILL/references 文档与 CLI help。
 - 修复潜在严重误判：`parse_ajg_rating()` 对未知/空值不再默认映射为 4*，改为未评级（0）；报告中新增“未评级”分组（如出现）。
 - 测试补充：新增 `--field_scope` 非法值应报错并打印可选 Field 列表的断言；并改为覆盖“不传 `--field_scope` 参数”的默认行为。
+
+## 2026-02-07
+- 根据用户反馈修复混合流程“候选池未被用于二次筛选/校验/报告”的断裂点（尤其是离线 `--auto_ai` 场景）。
+- 变更：
+  - `scripts/abs_journal.py`：`--auto_ai` 生成的 `ai_output.json` 新增 `candidate_pool_by_mode`（嵌入 easy/medium/hard 三个候选池）；并在 `--auto_ai` 时将 `abs_ai_review.py --candidate_pool_json` 指向 `ai_output.json` 本身以启用按 bucket 校验。
+  - `scripts/abs_ai_review.py`：支持从 `ai_output.json.candidate_pool_by_mode` 抽取候选池做子集校验（仍保持原来的单池/多池兼容）。
+  - `scripts/hybrid_report.py`：当 `ai_output.json` 内嵌候选池时，按 bucket 建索引填充 `ABS星级/Field`，并在“可追溯信息”区说明候选池来源。
+- 端到端自测（TopK=2 快速跑通）：`python3 scripts/abs_journal.py recommend --title "test" --mode medium --hybrid --export_candidate_pool_json reports/candidate_pool.json --auto_ai --ai_output_json reports/ai_output.json --ai_report_md reports/ai_report.md` 输出 `OK` 且报告三段均能填充 `ABS星级/Field`。
 <!-- 
   WHAT: Your session log - a chronological record of what you did, when, and what happened.
   WHY: Answers "What have I done?" in the 5-Question Reboot Test. Helps you resume after breaks.

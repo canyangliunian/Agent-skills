@@ -43,6 +43,13 @@ def build_index_multi(pool_multi: Dict[str, Any]) -> Dict[str, Dict[str, Dict[st
     out: Dict[str, Dict[str, Dict[str, Any]]] = {}
     for bucket in ["easy", "medium", "hard"]:
         pool = pool_multi.get(bucket) or {}
+        # Support embedded pools inside ai_output.json (offline --auto_ai path).
+        # Important: ai_output.json has keys easy/medium/hard for the selection itself,
+        # so we must not treat those as candidate pool objects.
+        if not isinstance(pool, dict) or "candidates" not in pool:
+            pool = {}
+        if not pool and isinstance(pool_multi.get("candidate_pool_by_mode"), dict):
+            pool = (pool_multi.get("candidate_pool_by_mode") or {}).get(bucket) or {}
         if not isinstance(pool, dict):
             continue
         out[bucket] = build_index(pool)
@@ -124,6 +131,10 @@ def extract_meta(pool: Dict[str, Any]) -> Dict[str, Any]:
 def is_multi_pool(obj: Dict[str, Any]) -> bool:
     return any(k in obj for k in ["easy", "medium", "hard"])
 
+def has_embedded_pools(ai: Dict[str, Any]) -> bool:
+    pools = (ai or {}).get("candidate_pool_by_mode")
+    return isinstance(pools, dict) and any(isinstance(pools.get(k), dict) for k in ["easy", "medium", "hard"])
+
 
 def render_report(
     pool: Dict[str, Any],
@@ -131,6 +142,8 @@ def render_report(
     *,
     topk: int,
 ) -> str:
+    ai_norm = normalize_ai(ai)
+    overlaps = find_cross_bucket_overlaps(ai_norm)
     if is_multi_pool(pool):
         meta_easy = extract_meta(pool.get("easy") or {})
         meta_medium = extract_meta(pool.get("medium") or {})
@@ -139,9 +152,10 @@ def render_report(
         meta = meta_medium or meta_easy or meta_hard
     else:
         meta = extract_meta(pool)
-        idx_multi = {"easy": build_index(pool), "medium": build_index(pool), "hard": build_index(pool)}
-    ai_norm = normalize_ai(ai)
-    overlaps = find_cross_bucket_overlaps(ai_norm)
+        # If ai embeds per-mode candidate pools, prefer those for indexing so Field/ABS星级 can be filled.
+        idx_multi = build_index_multi(ai) if isinstance(ai, dict) else {}
+        if not idx_multi:
+            idx_multi = {"easy": build_index(pool), "medium": build_index(pool), "hard": build_index(pool)}
 
     lines: List[str] = []
     lines.append("# 投稿期刊推荐（混合流程：脚本候选池 → AI 二次筛选）")
@@ -151,6 +165,14 @@ def render_report(
     if is_multi_pool(pool):
         lines.append("- 候选池形态：easy/medium/hard 多池（每段各自星级过滤与排序）")
         for label, m in [("Easy", meta_easy), ("Medium", meta_medium), ("Hard", meta_hard)]:
+            if not m:
+                continue
+            lines.append(f"- {label}：AJG CSV={m.get('ajg_csv')}；星级过滤={m.get('rating_filter')}；规模={m.get('count')}")
+    elif has_embedded_pools(ai):
+        lines.append("- 候选池形态：easy/medium/hard 多池（嵌入于 AI 输出 JSON；用于离线 auto_ai 复现与校验）")
+        pools = (ai.get("candidate_pool_by_mode") or {}) if isinstance(ai, dict) else {}
+        for label, bucket in [("Easy", "easy"), ("Medium", "medium"), ("Hard", "hard")]:
+            m = extract_meta(pools.get(bucket) or {}) if isinstance(pools.get(bucket), dict) else {}
             if not m:
                 continue
             lines.append(f"- {label}：AJG CSV={m.get('ajg_csv')}；星级过滤={m.get('rating_filter')}；规模={m.get('count')}")
