@@ -104,7 +104,7 @@ def render_table(
     lines: List[str] = []
     lines.append(f"### {bucket_title}")
     lines.append("")
-    lines.append("| 序号 | 期刊名 | ABS星级 | Field | 期刊主题 |")
+    lines.append("| 序号 | 期刊名 | ABS星级 | Field | 推荐理由 |")
     lines.append("|---:|---|---:|---|---|")
 
     count = 0
@@ -221,7 +221,7 @@ def render_report(
     lines.append("## 说明")
     lines.append("")
     lines.append("- `Field` 来自 AJG CSV，用于快速定位期刊所属领域。")
-    lines.append("- `期刊主题` 由 AI 根据论文内容生成，说明该期刊与论文的匹配理由。")
+    lines.append("- `推荐理由` 由 AI 根据论文内容生成，说明该期刊与论文的匹配理由。")
     lines.append("- `ABS星级` 来自 AJG 2024 数据库（1-4*，星级越高影响力越大）。")
     lines.append("- 本流程不自动联网查询审稿周期/版面费/投稿偏好等信息。")
     return "\n".join(lines)
