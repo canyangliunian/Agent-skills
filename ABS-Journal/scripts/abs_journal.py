@@ -263,6 +263,11 @@ def main() -> int:
         default="",
         help="AJG/ABS 星级过滤（逗号分隔，如: 1,2,3 或 3,4,4*）。默认将按 mode 自动分层：easy=1,2；medium=2,3；hard=4,4*。显式传入则覆盖默认。",
     )
+    ap_rec.add_argument(
+        "--exact_rating_balance",
+        action="store_true",
+        help="启用精确星级平衡（默认推荐：easy:5x2星+5x1星；medium:5x3星+5x2星；hard:5x4*+5x4星）"
+    )
 
     ap_up = sub.add_parser("update", help="更新AJG数据库（需要 env: AJG_EMAIL/AJG_PASSWORD）")
     ap_up.add_argument(
@@ -346,6 +351,8 @@ def main() -> int:
                 "--rating_filter",
                 rating_filter,
             ]
+            if getattr(args, "exact_rating_balance", False):
+                rec_args.append("--exact_rating_balance")
             returncode = run_py("scripts/abs_article_impl.py", rec_args)
             if returncode != 0:
                 return returncode
