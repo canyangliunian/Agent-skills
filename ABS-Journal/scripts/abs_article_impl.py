@@ -705,11 +705,11 @@ def rebalance_by_rating_quota(
     min_avail = min(int(available_by_rating.get(r, 0)) for r in allowed_ratings) if allowed_ratings else 0
     ideal_balanced_size = int(k * min_avail) if min_avail > 0 else 0
 
-    # Prefer the balanced size (1:1) when possible; ensure at least target_n if caller
-    # explicitly requests a smaller pool (e.g., for performance), but never exceed availability.
+    # Prefer the balanced size (1:1) when possible; caller provides `target_n` as a
+    # "try to export this many" size. If perfect 1:1 is impossible due to scarcity
+    # in one rating, we should still export up to `target_n` by filling from the
+    # adjacent rating within the same bucket (policy below).
     target_n_eff = min(int(target_n), int(available_total))
-    if ideal_balanced_size > 0:
-        target_n_eff = min(target_n_eff, ideal_balanced_size)
 
     # Quotas: best-effort 1:1 across allowed ratings, but never exceed availability.
     # Start from an equal share and then distribute remainder to ratings that still have spare capacity.
@@ -1050,23 +1050,11 @@ def main() -> int:
             gmeta = gmeta2
             filtered = filtered2
 
-    # Phase 3 fallback: if still too small, relax rating filter by adding the next lower tier.
-    # - easy (1,2) -> allow add 3
-    # - medium (2,3) -> allow add 1
-    # - hard (4,4*) -> allow add 3
-    if allowed and len(filtered) < int(args.topk):
-        extra = set()
-        if paper.mode == "easy":
-            extra = {"3"}
-        elif paper.mode == "medium":
-            extra = {"1"}
-        else:  # hard
-            extra = {"3"}
-        allowed2 = allowed | extra
-        filtered2 = [x for x in scored if (x[0].ajg_2024 or "").strip() in allowed2]
-        if len(filtered2) > len(filtered):
-            filtered = filtered2
-            allowed = allowed2
+    # Phase 3 fallback (soft): if still too small, do NOT expand the rating filter silently.
+    # Expanding ratings here breaks the user's mental model for mode buckets and also makes
+    # exported candidate pools confusing (e.g., easy unexpectedly contains 3-star journals).
+    # We instead keep the requested rating filter and let downstream selection/reporting
+    # reflect the true availability.
 
     scored = filtered
 

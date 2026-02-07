@@ -302,7 +302,7 @@ def main() -> int:
         raw_export = strip_leading_dirs(raw_export, "reports", "reports/reports", "assets", "assets/assets")
         export_json = resolve_inside_skill(raw_export, base_dir=DEFAULT_REPORTS_DIR) if raw_export else ""
         if args.hybrid and not export_json:
-            raise RuntimeError("--hybrid 需要同时提供 --export_candidate_pool_json（候选池 JSON 输出路径）")
+            export_json = resolve_inside_skill("candidate_pool.json", base_dir=DEFAULT_REPORTS_DIR)
 
         modes = ["easy", "medium", "hard"]
         if args.mode and args.mode not in modes:
@@ -317,8 +317,6 @@ def main() -> int:
         multi_pool = bool(args.hybrid)
         export_json_list = []
         if multi_pool:
-            if not export_json:
-                raise RuntimeError("--hybrid 需要同时提供 --export_candidate_pool_json（候选池 JSON 输出路径）")
             base, ext = os.path.splitext(export_json)
             export_json_list = [f"{base}_{m}{ext or '.json'}" for m in selected_modes]
         else:
@@ -354,6 +352,13 @@ def main() -> int:
 
         if not args.hybrid:
             return 0
+
+        if export_json_list:
+            print("")
+            print("已生成候选池 JSON：")
+            for p in export_json_list:
+                if p:
+                    print("-", p)
 
         # Validate AI output (manual step) if provided.
         if args.ai_output_json:

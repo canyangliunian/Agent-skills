@@ -36,18 +36,9 @@ python3 scripts/abs_journal.py recommend -h
 
 ### Step 1：生成候选池 JSON（不联网）
 
-分别为三类难度生成候选池（便于套用用户的星级约束，例如 easy=1/2、medium=1/2/3、hard=3/4/4*）：
+`--hybrid` 会一次性生成 easy/medium/hard 三个候选池（不用分别跑三次）。你可以显式给一个“基准文件名”，脚本会自动加后缀：
 
 ```bash
-python3 scripts/abs_journal.py \
-  recommend \
-  --title "你的论文标题" \
-  --abstract "你的摘要（可选）" \
-  --mode easy \
-  --topk 10 \
-  --hybrid \
-  --export_candidate_pool_json "reports/candidate_pool_easy.json"
-  
 python3 scripts/abs_journal.py \
   recommend \
   --title "你的论文标题" \
@@ -55,17 +46,15 @@ python3 scripts/abs_journal.py \
   --mode medium \
   --topk 10 \
   --hybrid \
-  --export_candidate_pool_json "reports/candidate_pool_medium.json"
-
-python3 scripts/abs_journal.py \
-  recommend \
-  --title "你的论文标题" \
-  --abstract "你的摘要（可选）" \
-  --mode hard \
-  --topk 10 \
-  --hybrid \
-  --export_candidate_pool_json "reports/candidate_pool_hard.json"
+  --export_candidate_pool_json "candidate_pool.json"
 ```
+
+输出文件为：
+- `reports/candidate_pool_easy.json`
+- `reports/candidate_pool_medium.json`
+- `reports/candidate_pool_hard.json`
+
+如果你省略 `--export_candidate_pool_json`，脚本将默认使用 `reports/candidate_pool.json` 作为基准文件名（同样会生成三份带后缀的候选池）。
 
 ### Step 2：把候选池交给 AI 二次筛选（模板）
 
@@ -107,7 +96,8 @@ python3 scripts/abs_journal.py \
 - 若缺少 easy/medium/hard 任一键，或任一组少于 TopK=10 条，或 topic 为空，将直接报错退出。
 - `期刊主题` 为 AI 解释性摘要，用于解释与论文主题的匹配关系；不是期刊官方 Aims&Scope。
 - 星级过滤（重要）：`--rating_filter` 留空时，脚本会按 mode 自动分层（easy=1,2；medium=2,3；hard=4,4*）。**显式传入** `--rating_filter` 会覆盖默认分层，可能导致三段星级过滤一致（不符合 easy/medium/hard 分层预期）。
-- 候选池星级均衡（重要）：在导出候选池 JSON 时，脚本会在“当前模式允许的星级集合”内做 **尽量 1:1** 的均衡采样（例如 easy 尽量让 1 与 2 数量接近）。若某星级天然不足，则会按同桶相邻星级补齐，并在候选池 `meta.rating_rebalance` 里记录可用/选择情况，便于排查“为何某档很少/为零”。
+- 候选池星级均衡（重要）：在导出候选池 JSON 时，脚本会在“当前模式允许的星级集合”内做 **尽量 1:1** 的均衡采样（例如 easy 让 1 与 2 数量尽量接近；hard 让 4 与 4* 尽量接近）。若某星级天然不足（例如你这次 test 的 easy 桶里 `AJG 2024=1` 在主题贴合候选集中为 0），则该桶无法做到严格 1:1；此时会在候选池 `meta.rating_rebalance.available_by_rating` / `selected_by_rating` 里记录“为何某档很少/为零”。
+- `--auto_ai`（离线自动二次筛选）默认会**尽量避免** easy/medium/hard 三桶重复期刊；但当某桶候选池较小、严格去重会导致 TopK 不足时，会允许跨桶重复以保证流程可运行（该行为会在 `reports/ai_output.json` 的 `meta.allow_overlap=true` 体现）。
 
 重要说明（避免你这次发现的“又重新跑了一次 medium”的误解）：
 - `--hybrid` 模式下，脚本会**一次性生成 easy/medium/hard 三个候选池**，文件名为：
