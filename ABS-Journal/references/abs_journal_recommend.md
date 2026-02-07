@@ -45,7 +45,6 @@ python3 scripts/abs_journal.py \
   --abstract "你的摘要（可选）" \
   --mode easy \
   --topk 10 \
-  --rating_filter "1,2" \
   --hybrid \
   --export_candidate_pool_json "reports/candidate_pool_easy.json"
   
@@ -55,7 +54,6 @@ python3 scripts/abs_journal.py \
   --abstract "你的摘要（可选）" \
   --mode medium \
   --topk 10 \
-  --rating_filter "1,2,3" \
   --hybrid \
   --export_candidate_pool_json "reports/candidate_pool_medium.json"
 
@@ -65,7 +63,6 @@ python3 scripts/abs_journal.py \
   --abstract "你的摘要（可选）" \
   --mode hard \
   --topk 10 \
-  --rating_filter "3,4,4*" \
   --hybrid \
   --export_candidate_pool_json "reports/candidate_pool_hard.json"
 ```
@@ -99,7 +96,6 @@ python3 scripts/abs_journal.py \
   --abstract "你的摘要（可选）" \
   --mode medium \
   --topk 10 \
-  --rating_filter "1,2,3" \
   --hybrid \
   --export_candidate_pool_json "candidate_pool.json" \
   --ai_output_json "ai_output.json" \
@@ -110,6 +106,7 @@ python3 scripts/abs_journal.py \
 - 若 AI 输出包含候选池之外的期刊名，校验会失败并提示具体条目，必须让 AI 重试（禁止悄悄替换）。
 - 若缺少 easy/medium/hard 任一键，或任一组少于 TopK=10 条，或 topic 为空，将直接报错退出。
 - `期刊主题` 为 AI 解释性摘要，用于解释与论文主题的匹配关系；不是期刊官方 Aims&Scope。
+- 星级过滤（重要）：`--rating_filter` 留空时，脚本会按 mode 自动分层（easy=1,2；medium=2,3；hard=4,4*）。**显式传入** `--rating_filter` 会覆盖默认分层，可能导致三段星级过滤一致（不符合 easy/medium/hard 分层预期）。
 
 重要说明（避免你这次发现的“又重新跑了一次 medium”的误解）：
 - `--hybrid` 模式下，脚本会**一次性生成 easy/medium/hard 三个候选池**，文件名为：
@@ -137,7 +134,7 @@ python3 scripts/abs_journal.py \
 - `--topk TOPK`：输出期刊数
 - `--field FIELD`：论文领域标签/关键词配置（默认 `ECON`；不控制候选范围）
 - `--field_scope SCOPE`：候选期刊 Field 白名单（AJG CSV 的 Field 列，逗号分隔；精确匹配）。为空则使用默认白名单：`ECON, FINANCE, PUB SEC, REGIONAL STUDIES, PLANNING AND ENVIRONMENT, SOC SCI`。
-- `--rating_filter "1,2,3"`：AJG/ABS 星级过滤（逗号分隔，支持 `4*`）
+- `--rating_filter "1,2,3"`：AJG/ABS 星级过滤（逗号分隔，支持 `4*`）。注意：在混合推荐里，若留空则按 mode 自动分层；显式传入会覆盖默认分层。
 - `--hybrid`：启用混合流程（只导出候选池/做校验/生成报告；不调用外部 API）
 - `--export_candidate_pool_json PATH`：导出候选池 JSON（相对路径将写入 `reports/`）
 - `--ai_output_json PATH`：AI 输出 JSON（相对路径将从 `reports/` 解析）

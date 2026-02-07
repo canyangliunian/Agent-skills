@@ -118,3 +118,12 @@ Phase 2（修复混合流程三候选池贯通）
 - Update phase status as you progress: pending → in_progress → complete
 - Re-read this plan before major decisions (attention manipulation)
 - Log ALL errors - they help avoid repetition
+
+
+### Phase 3: 修正文档/参考（easy/medium/hard 星级分层一致性）
+- [ ] RED：复现“文档照抄导致三段星级过滤一致”的失败样例（来自 tests/abs_journal_reports/ai_report.md）。
+- [ ] GREEN：更新 `SKILL.md` 与 `references/abs_journal_recommend.md`：
+  - 强调 `--rating_filter` 显式传入会覆盖默认分层
+  - Quick Start 示例改为留空（不传）或按三段分别不同桶
+- [ ] REFACTOR：补充快速自检清单：报告 meta 中 Easy/Medium/Hard 的 `rating_filter` 应分别为 `1,2` / `2,3` / `4,4*`。
+- [ ] 验证：跑一次 `python3 scripts/abs_journal.py recommend --hybrid ... --auto_ai`，检查生成 report 的三段 meta 分层一致。

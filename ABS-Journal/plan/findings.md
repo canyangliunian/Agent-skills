@@ -110,3 +110,17 @@
 -->
 *Update this file after every 2 view/browser/search operations*
 *This prevents visual information from being lost*
+
+
+## 2026-02-08：easy/medium/hard 星级过滤不一致问题（根因）
+
+### 现象
+- `/Users/lingguiwang/Documents/Coding/LLM/tests/abs_journal_reports/ai_report.md` 中三段（Easy/Medium/Hard）的“星级过滤”完全一致（都为 `2,3`），与预期分层（easy < medium < hard）不一致。
+
+### 根因定位
+- 代码侧已经实现默认分层：`scripts/abs_journal.py` 中 `DEFAULT_RATING_FILTER_BY_MODE = {easy: 1,2; medium: 2,3; hard: 4,4*}`，当 `--rating_filter` 留空时会按 mode 自动选择。
+- 但文档/示例（`SKILL.md` 与 `references/abs_journal_recommend.md`）仍示范传入统一或不合理的 `--rating_filter`（如 `"1,2,3"` 或 hard 用 `"3,4,4*"`），会覆盖默认分层，导致 AI/用户照抄时出现“星级过滤不一致/不分层”。
+
+### 修复方向
+- 文档侧明确：混合流程要么不传 `--rating_filter`（留空=自动分层），要么分别为 easy/medium/hard 明确不同桶；并强调“显式传入会覆盖默认分层”。
+- 需要同步修正文档与示例，并用本地离线用例验证生成的报告中三段 meta 的 `rating_filter` 分别为 `1,2` / `2,3` / `4,4*`。

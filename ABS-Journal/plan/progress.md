@@ -145,3 +145,9 @@
   - Include timestamps for errors to track when issues occurred
 -->
 *Update after completing each phase or encountering errors*
+
+
+## 2026-02-08
+- 复现：运行 `python3 scripts/abs_journal.py recommend --hybrid ... --auto_ai`，确认代码默认星级分层可正常生效（easy=1,2；medium=2,3；hard=4,4*），问题不在实现。
+- 定位：发现 `SKILL.md` 与 `references/abs_journal_recommend.md` 中示例仍显式传入 `--rating_filter`（如 `1,2,3`），覆盖默认分层，导致用户/AI 照抄后出现三段星级过滤一致。
+- 计划：按 $writing-skills（TDD）修正文档与 reference 示例，并补充“如何验证 meta 的 rating_filter”检查点。
