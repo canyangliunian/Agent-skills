@@ -1,136 +1,106 @@
-# Task Plan：混合推荐报告中"每类期刊没有 1:1 匹配"问题诊断
+# Task Plan: 规范化期刊推荐报告输出样式
 
 ## Goal
-- 诊断用户反馈的"每类里面没有 1:1 匹配"问题（参考 Session ID: 95643038-114b-4aee-b7fd-05c5535a547）
-- 明确问题是指"候选池星级分布"还是"最终推荐报告的分类呈现"
-- 提供针对性的修复方案
+解决 abs-journal skill 在生成期刊推荐时输出样式混乱的问题（一会儿纯文字,一会儿表格），基于 /writing-skills 规范统一输出格式。
 
-## 问题澄清（2026-02-08 03:00）
-
-### 用户反馈
-- "依然每类里面没有 1:1"
-- 提供测试数据：关于中美贸易战、农业关税的 RCT 研究论文
-
-### 可能的理解维度
-1. **候选池星级分布**：已通过"按星级分层 gating"修复，当前测试显示 Easy/Medium 完美 1:1
-2. **最终推荐报告分类**：用户可能期望在"综合评分、影响力、实证方法、跨学科视角、政策导向"五个类别中每类都有 1:1 高度匹配的期刊
-
-### 测试结果（2026-02-08）
-使用提供的测试数据运行 `--hybrid` 流程：
-
-**候选池星级分布（已修复）**：
-- Easy: `{"1": 80, "2": 80}` → selected `{"1": 75, "2": 75}` ✅ 1:1
-- Medium: `{"2": 80, "3": 80}` → selected `{"2": 75, "3": 75}` ✅ 1:1
-- Hard: `{"4": 41, "4*": 15}` → selected `{"4": 35, "4*": 15}` ⚠️ 约 2:1（受限于可用量）
-
-**最终推荐报告呈现**：
-- 当前报告只按难度分段（Easy/Medium/Hard），没有按"综合评分、影响力、实证方法、跨学科、政策"五类分组
-- 如果用户期望的是这五类分组，则需要重新设计推荐逻辑
+## Context
+- **问题来源**: Session ID a12dd2fe-a5f9-4228-8219-9f935055f60e
+- **当前状态**: 主报告文件 `reports/ai_report.md` 格式符合要求（固定表格输出）
+- **核心问题**: Claude 在基于主报告文件向用户做推荐时，输出样式不一致（混合使用纯文字列表和表格）
+- **需求**: 统一规范 Claude 的推荐输出样式，必要时创建模板文件
 
 ## Current Phase
-Phase 3: 审核最终推荐输出是否 1:1 - IN PROGRESS
-
-## 需求澄清（2026-02-08 03:10）
-用户关键问题：**候选池内部实现了 1:1，但最终推荐输出是否也是 1:1？**
-
-这是两个不同阶段：
-1. **候选池阶段**（已验证 ✅）：Easy/Medium 的候选池 JSON 内部星级分布为 1:1
-2. **最终推荐阶段**（待审核 ❓）：从候选池中选出 TopK 推荐给用户时，是否保持 1:1？
+Phase 2: 设计规范化方案 - COMPLETE
+Phase 3: 实现规范化 - IN PROGRESS
 
 ## Phases
 
-### Phase 1: 问题确认与需求澄清
-- [x] 使用测试数据运行 `--hybrid` 流程
-- [x] 读取候选池 JSON 文件分析星级分布
-- [x] 明确用户期望的"1:1"含义
-- **Status:** complete
+### Phase 1: 问题诊断与调研 ✅
+**目标**: 明确样式混乱的具体场景和根本原因
 
-### Phase 2: 完成诊断与总结
-- [x] 分析 Hard 模式 4* 不足的根本原因
-- [x] 确认是否有进一步优化空间
-- [x] 提供初步诊断报告
-- **Status:** complete
+- [x] 读取 /writing-skills 相关文档,理解其输出规范要求（未找到本地文档）
+- [x] 分析 `hybrid_report.py` 当前的报告生成逻辑
+- [x] 查看 abs-journal skill 的主入口文件 (`SKILL.md`),了解推荐流程
+- [x] 识别样式混乱发生在哪个环节:
+  - **根因**: SKILL.md 要求"期刊主题"列，hybrid_report.py 输出"Field"列
+  - 不是样式混乱，而是列定义不同步
+- [x] 记录具体的不一致案例：SKILL.md Line 64 vs hybrid_report.py Line 107
 
-### Phase 3: 审核最终推荐输出
-- [x] 读取推荐报告（`reports/ai_report.md`）
-- [x] 统计 Easy/Medium/Hard 三段的推荐期刊星级分布
-- [x] 对比"候选池 1:1" vs "推荐输出 1:1"
-- [x] 定位推荐选择逻辑（`build_ranked` 函数）
-- [x] 确认需要在推荐阶段也实施 1:1 均衡
-- **Status:** complete
-- **发现**：候选池虽然是 1:1，但最终推荐全是高星级（Easy 全是 2 星，Medium 全是 3 星，Hard 全是 4 星）
+**Status**: complete
+**完成时间**: 2026-02-08 03:30
 
-### Phase 4: 实施推荐阶段 1:1 均衡（方案 A）
-- [x] 修复 `picked_names` 变量未定义的 bug
-- [x] 让 `--hybrid` 模式默认启用 `exact_rating_balance`
-- [x] 修改 `pick_unique` 函数，实现星级均衡采样逻辑
-- [x] 使用测试数据验证修复效果（所有模式完美 1:1）
-- [x] 检查边界情况（实现了回退策略）
-- **Status:** complete
+### Phase 2: 设计规范化方案 ✅
+**目标**: 设计统一的输出模板和规范
 
-## 验证结果（2026-02-08 03:13）
-- Easy Top10: 5×1星 + 5×2星 ✅ 完美 1:1
-- Medium Top10: 5×2星 + 5×3星 ✅ 完美 1:1
-- Hard Top10: 5×4星 + 5×4* ✅ 完美 1:1
+- [x] 基于调研结果，明确问题不在样式混乱，而在列定义不同步
+- [x] 决策方案: **选择方案 A 路径 1** - 修改 `hybrid_report.py`，添加"期刊主题"列
+  - 理由 1: AI 输出 JSON 中已有 topic 字段可直接使用
+  - 理由 2: "期刊主题"比"Field"提供更多价值（AI 生成的针对性说明）
+  - 理由 3: 符合混合流程设计初衷（AI 二次筛选补充推荐理由）
+- [x] 明确新表格格式: 序号 | 期刊名 | ABS星级 | 期刊主题
+- [x] 设计实施步骤:
+  1. 修改 `render_table` 函数的表头和数据提取逻辑
+  2. 从 AI 输出 JSON 的 topic 字段提取期刊主题
+  3. 保留 Field 信息在"可追溯信息"区展示
 
-## 最终状态
-**所有 Phases 已完成** ✅
+**Status**: complete
+**完成时间**: 2026-02-08 03:35
 
-## Phases
+### Phase 3: 实现规范化
+**目标**: 根据设计方案实施修改
 
-### Phase 1: 问题诊断与方案设计
-- [x] 分析候选池 JSON 的 `rating_rebalance` meta 数据
-- [x] 确认问题：显式传入 `--rating_filter` 后，某些星级因主题贴合 gating 被完全过滤
-- [x] 分析完整链路：
-  - Phase 1 gating: 跨星级统一按 fit_score 排序，取 TopN（默认 80）
-  - Phase 2 fallback: 扩大到 200 后仍无低星级期刊
-  - 根因: 低星级期刊的平均主题贴合度较低，TopN 中被完全过滤
-- [x] 设计修复方案（方案 A：按星级分层 gating）
-- **Status:** complete
+- [ ] 如果选择方案 A: 修改 `hybrid_report.py`
+  - [ ] 统一表格生成函数的格式
+  - [ ] 添加输出格式验证逻辑
+- [ ] 如果选择方案 B: 创建 `recommendation_template.md`
+  - [ ] 定义标准的推荐报告结构
+  - [ ] 提供示例填充说明
+- [ ] 如果选择方案 C: 更新 `SKILL.md`
+  - [ ] 添加"输出样式规范"章节
+  - [ ] 明确 Claude 在推荐时应遵循的格式约束
 
-### Phase 2: 实现修复（方案 A：按星级分层 gating）
-- [x] 扩展 `GatingMeta` dataclass，添加 `per_rating_stats` 字段
-- [x] 修改 `gate_by_topic_fit` 函数，支持按星级分层 gating（V2）
-- [x] 添加 `_gate_by_topic_fit_per_rating` 函数，在每个星级内分别进行主题贴合排序
-- [x] 添加 `_rating_sort_key` 辅助函数，用于星级排序
-- [x] 更新 `build_ranked` 调用，传入 `rating_filter` 参数
-- [x] 更新 `candidate_pool_to_dict` 函数，输出 `per_rating_stats`
-- **Status:** complete
+**Status**: pending
 
-### Phase 3: 验证测试
-- [x] 运行完整混合流程，验证候选池星级分布接近 1:1
-- [x] 检查 `ideal_balanced_pool_size > 0`
-  - Easy: 160 (从 0 → 160)
-  - Medium: 160 (从 0 → 160)
-  - Hard: 30 (从 0 → 30)
-- [x] 验证 per-rating 统计正确输出
-  - Easy: {'1': 80, '2': 80} - 完美 1:1
-  - Medium: {'2': 80, '3': 80} - 完美 1:1
-  - Hard: {'4': 41, '4*': 15} - 接近 1:1（受限于可用量）
-- **Status:** complete
+### Phase 4: 测试验证
+**目标**: 使用真实数据验证规范化效果
 
-### Phase 4: 文档更新
-- [x] 更新 `references/abs_journal_recommend.md` 说明新的 gating 策略
-- **Status:** complete
+- [ ] 使用 Session a12dd2fe 的测试数据重新生成推荐
+- [ ] 检查输出是否严格遵循统一格式
+- [ ] 验证以下场景:
+  - Easy/Medium/Hard 三段推荐的格式一致性
+  - 可追溯信息的呈现格式
+  - 补充说明的格式
+- [ ] 对比修改前后的输出差异
+
+**Status**: pending
+
+### Phase 5: 文档更新
+**目标**: 更新相关文档,确保规范可持续
+
+- [ ] 更新 `README.md`,说明新的输出规范
+- [ ] 在 `references/` 目录下创建输出样式指南文档
+- [ ] 如果创建了模板文件,添加使用说明
+- [ ] 更新 `SKILL.md` 的使用示例
+
+**Status**: pending
 
 ## Key Questions
-1. [已解决] 如何确保各星级都有足够候选？→ 按星级分层进行主题贴合 gating
-2. [已解决] 如何记录各星级的候选数量？→ GatingMeta.per_rating_stats
+1. [待调研] /writing-skills 的具体规范要求是什么?
+2. [待调研] 样式混乱发生在脚本生成阶段还是 Claude 二次呈现阶段?
+3. [待决策] 应该采用哪种方案来规范输出（A/B/C）?
+4. [待设计] 表格和列表的使用边界是什么?
 
 ## Decisions Made
-| Decision | Rationale |
-|----------|-----------|
-| 按星级分层 gating（方案 A）| 根本解决问题，确保各星级都有候选 |
-| 扩展 GatingMeta 数据结构| 记录各星级的候选数量，便于调试和验证 |
-| 兼容原有 V1 逻辑| 如果不传 rating_filter，使用原有统一排序策略 |
+| Decision | Rationale | Date |
+|----------|-----------|------|
+| 创建 plan/ 目录下的规划文件 | 符合 CLAUDE.md 的规范要求 | 2026-02-08 |
 
 ## Errors Encountered
-| Error | Attempt | Resolution |
-|-------|---------|------------|
-| NameError: name 'field' is not defined | 1 | 添加 `from dataclasses import dataclass, field` |
+| Error | Attempt | Resolution | Date |
+|-------|---------|------------|------|
+| (待记录) | - | - | - |
 
 ## Notes
-- Update phase status as you progress: pending → in_progress → complete
-- Re-read this plan before major decisions (attention manipulation)
-- Log ALL errors - they help avoid repetition
-- Never repeat a failed action - mutate your approach instead
+- 根据用户反馈,当前主报告文件格式正确,问题主要在推荐呈现环节
+- 需要平衡可读性和一致性,避免过度格式化导致信息传递效率降低
+- 考虑是否需要针对不同推荐场景（快速推荐 vs 详细分析）使用不同模板

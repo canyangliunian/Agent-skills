@@ -1,0 +1,1558 @@
+{
+  "meta": {
+    "generated_at": "2026-02-08 03:11",
+    "paper": {
+      "field": "ECON",
+      "title": "Information, beliefs and support for retaliatory tariffs on US agricultural products: evidence from a randomised controlled trial in China",
+      "abstract": "The US–China trade war has profoundly reshaped global agricultural markets, yet the consequences of protectionist measures for domestic public attitudes—particularly within collectivist societies like China—have been underexplored. This study investigates how Chinese citizens perceive retaliatory tariffs on US agricultural products and explores how awareness of economic self-interest shapes their support for such policies."
+    },
+    "mode": "medium",
+    "ajg_csv": "/Users/lingguiwang/Documents/Coding/LLM/Agent-skills/ABS-Journal/assets/data/ajg_2024_journals_core_custom.csv",
+    "rating_filter": "2,3",
+    "rating_filter_effective": "2,3",
+    "field_scope_requested": "",
+    "field_scope_effective": [
+      "ECON",
+      "FINANCE",
+      "PUB SEC",
+      "REGIONAL STUDIES, PLANNING AND ENVIRONMENT",
+      "SOC SCI"
+    ],
+    "gating": {
+      "strategy": "topn-per-rating",
+      "candidate_topn": 80,
+      "min_candidates": 20,
+      "total_before": 700,
+      "total_after": 160,
+      "fallback_used": false,
+      "per_rating_stats": {
+        "2": 80,
+        "3": 80
+      }
+    },
+    "count": 100,
+    "rating_rebalance": {
+      "enabled": true,
+      "allowed_ratings": [
+        "2",
+        "3"
+      ],
+      "target_pool_size": 100,
+      "ideal_balanced_pool_size": 160,
+      "available_by_rating": {
+        "2": 80,
+        "3": 80
+      },
+      "selected_by_rating": {
+        "2": 50,
+        "3": 50
+      },
+      "filled": false,
+      "insufficient_total_candidates": false,
+      "quota_description": "精确1:1配额（基础50本，余数0分配给前0个星级）",
+      "exact_balance": true
+    }
+  },
+  "candidates": [
+    {
+      "id": "econ:2:agricultural-economics-united-kingdom",
+      "field": "ECON",
+      "journal": "Agricultural Economics (United Kingdom)",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.699999999999998,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 68.99999999999999
+      }
+    },
+    {
+      "id": "econ:2:australian-journal-of-agricultural-and-resource-economics",
+      "field": "ECON",
+      "journal": "Australian Journal of Agricultural and Resource Economics",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.699999999999998,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 68.99999999999999
+      }
+    },
+    {
+      "id": "econ:2:canadian-journal-of-agricultural-economics",
+      "field": "ECON",
+      "journal": "Canadian Journal of Agricultural Economics",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.699999999999998,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 68.99999999999999
+      }
+    },
+    {
+      "id": "econ:2:journal-of-agricultural-and-resource-economics",
+      "field": "ECON",
+      "journal": "Journal of Agricultural and Resource Economics",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.699999999999998,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 68.99999999999999
+      }
+    },
+    {
+      "id": "econ:2:journal-of-industry-competition-and-trade",
+      "field": "ECON",
+      "journal": "Journal of Industry, Competition and Trade",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.599999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 68.39999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:public-money-and-management",
+      "field": "PUB SEC",
+      "journal": "Public Money and Management",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.6
+      }
+    },
+    {
+      "id": "pub-sec:2:public-administration-and-development",
+      "field": "PUB SEC",
+      "journal": "Public Administration and Development",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.6,
+        "method_penalty": 0.0,
+        "total_score": 67.44
+      }
+    },
+    {
+      "id": "econ:2:annals-of-public-and-cooperative-economics",
+      "field": "ECON",
+      "journal": "Annals of Public and Cooperative Economics",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "econ:2:applied-economic-perspectives-and-policy",
+      "field": "ECON",
+      "journal": "Applied Economic Perspectives and Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "econ:2:b-e-journal-of-economic-analysis-and-policy",
+      "field": "ECON",
+      "journal": "B.E. Journal of Economic Analysis and Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "econ:2:contemporary-economic-policy",
+      "field": "ECON",
+      "journal": "Contemporary Economic Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "econ:2:information-economics-and-policy",
+      "field": "ECON",
+      "journal": "Information Economics and Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "econ:2:journal-of-policy-modeling",
+      "field": "ECON",
+      "journal": "Journal of Policy Modeling",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:australian-journal-of-public-administration",
+      "field": "PUB SEC",
+      "journal": "Australian Journal of Public Administration",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:evidence-and-policy",
+      "field": "PUB SEC",
+      "journal": "Evidence and Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:international-journal-of-public-administration",
+      "field": "PUB SEC",
+      "journal": "International Journal of Public Administration",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:policy-studies",
+      "field": "PUB SEC",
+      "journal": "Policy Studies",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:public-integrity",
+      "field": "PUB SEC",
+      "journal": "Public Integrity",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:public-organization-review",
+      "field": "PUB SEC",
+      "journal": "Public Organization Review",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 67.19999999999999
+      }
+    },
+    {
+      "id": "econ:2:journal-of-public-economic-theory",
+      "field": "ECON",
+      "journal": "Journal of Public Economic Theory",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.4,
+        "total_score": 66.88
+      }
+    },
+    {
+      "id": "econ:2:oxford-review-of-economic-policy",
+      "field": "ECON",
+      "journal": "Oxford Review of Economic Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.6,
+        "method_penalty": 0.0,
+        "total_score": 66.83999999999999
+      }
+    },
+    {
+      "id": "econ:2:resources-policy",
+      "field": "ECON",
+      "journal": "Resources Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.6,
+        "method_penalty": 0.0,
+        "total_score": 66.83999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:perspectives-on-public-management-governance",
+      "field": "PUB SEC",
+      "journal": "Perspectives on Public Management & Governance",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.6,
+        "method_penalty": 0.0,
+        "total_score": 66.83999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:journal-of-health-services-research-and-policy",
+      "field": "PUB SEC",
+      "journal": "Journal of Health Services Research and Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 1.2,
+        "method_penalty": 0.0,
+        "total_score": 66.47999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:public-personnel-management",
+      "field": "PUB SEC",
+      "journal": "Public Personnel Management",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 1.2,
+        "method_penalty": 0.0,
+        "total_score": 66.47999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:public-policy-and-administration",
+      "field": "PUB SEC",
+      "journal": "Public Policy and Administration",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 1.2,
+        "method_penalty": 0.0,
+        "total_score": 66.47999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:review-of-policy-research",
+      "field": "PUB SEC",
+      "journal": "Review of Policy Research",
+      "ajg_2024": "2",
+      "ajg_2021": "None",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 1.2,
+        "method_penalty": 0.0,
+        "total_score": 66.47999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:state-politics-and-policy-quarterly",
+      "field": "PUB SEC",
+      "journal": "State Politics and Policy Quarterly",
+      "ajg_2024": "2",
+      "ajg_2021": "None",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 1.2,
+        "method_penalty": 0.0,
+        "total_score": 66.47999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:transforming-government-people-process-and-policy",
+      "field": "PUB SEC",
+      "journal": "Transforming Government: People, Process and Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 1.2,
+        "method_penalty": 0.0,
+        "total_score": 66.47999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:journal-of-public-policy",
+      "field": "PUB SEC",
+      "journal": "Journal of Public Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "None",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 1.7999999999999998,
+        "method_penalty": 0.0,
+        "total_score": 66.11999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:public-performance-management-review",
+      "field": "PUB SEC",
+      "journal": "Public Performance & Management Review",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 1.7999999999999998,
+        "method_penalty": 0.0,
+        "total_score": 66.11999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:social-policy-and-administration",
+      "field": "PUB SEC",
+      "journal": "Social Policy and Administration",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 1.7999999999999998,
+        "method_penalty": 0.0,
+        "total_score": 66.11999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:health-policy",
+      "field": "PUB SEC",
+      "journal": "Health Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 2.4,
+        "method_penalty": 0.0,
+        "total_score": 65.75999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:policy-design-and-practice",
+      "field": "PUB SEC",
+      "journal": "Policy Design and Practice",
+      "ajg_2024": "2",
+      "ajg_2021": "None",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 2.4,
+        "method_penalty": 0.0,
+        "total_score": 65.75999999999999
+      }
+    },
+    {
+      "id": "econ:2:review-of-environmental-economics-and-policy",
+      "field": "ECON",
+      "journal": "Review of Environmental Economics and Policy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 3.0,
+        "method_penalty": 0.0,
+        "total_score": 65.39999999999999
+      }
+    },
+    {
+      "id": "pub-sec:2:review-of-public-personnel-administration",
+      "field": "PUB SEC",
+      "journal": "Review of Public Personnel Administration",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 4.2,
+        "method_penalty": 0.0,
+        "total_score": 64.67999999999999
+      }
+    },
+    {
+      "id": "econ:2:contributions-to-political-economy",
+      "field": "ECON",
+      "journal": "Contributions to Political Economy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 64.19999999999999
+      }
+    },
+    {
+      "id": "econ:2:european-journal-of-political-economy",
+      "field": "ECON",
+      "journal": "European Journal of Political Economy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 64.19999999999999
+      }
+    },
+    {
+      "id": "econ:2:history-of-political-economy",
+      "field": "ECON",
+      "journal": "History of Political Economy",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 64.19999999999999
+      }
+    },
+    {
+      "id": "econ:2:environment-and-development-economics",
+      "field": "ECON",
+      "journal": "Environment and Development Economics",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.99999999999999
+      }
+    },
+    {
+      "id": "econ:2:annals-of-economics-and-finance",
+      "field": "ECON",
+      "journal": "Annals of Economics and Finance",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.79999999999999
+      }
+    },
+    {
+      "id": "econ:2:international-review-of-economics-and-finance",
+      "field": "ECON",
+      "journal": "International Review of Economics and Finance",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.79999999999999
+      }
+    },
+    {
+      "id": "econ:2:american-journal-of-health-economics",
+      "field": "ECON",
+      "journal": "American Journal of Health Economics",
+      "ajg_2024": "2",
+      "ajg_2021": "None",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.39999999999999
+      }
+    },
+    {
+      "id": "econ:2:american-law-and-economics-review",
+      "field": "ECON",
+      "journal": "American Law and Economics Review",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.39999999999999
+      }
+    },
+    {
+      "id": "econ:2:applied-economics",
+      "field": "ECON",
+      "journal": "Applied Economics",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.39999999999999
+      }
+    },
+    {
+      "id": "econ:2:b-e-journal-of-macroeconomics",
+      "field": "ECON",
+      "journal": "B.E. Journal of Macroeconomics",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.39999999999999
+      }
+    },
+    {
+      "id": "econ:2:b-e-journal-of-theoretical-economics",
+      "field": "ECON",
+      "journal": "B.E. Journal of Theoretical Economics",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.39999999999999
+      }
+    },
+    {
+      "id": "econ:2:bulletin-of-economic-research",
+      "field": "ECON",
+      "journal": "Bulletin of Economic Research",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.39999999999999
+      }
+    },
+    {
+      "id": "econ:2:cesifo-economic-studies",
+      "field": "ECON",
+      "journal": "CESifo Economic Studies",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.39999999999999
+      }
+    },
+    {
+      "id": "econ:2:china-economic-review",
+      "field": "ECON",
+      "journal": "China Economic Review",
+      "ajg_2024": "2",
+      "ajg_2021": "2",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 3.0,
+        "value_score": 2.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:american-journal-of-agricultural-economics",
+      "field": "ECON",
+      "journal": "American Journal of Agricultural Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.699999999999998,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 64.99999999999999
+      }
+    },
+    {
+      "id": "econ:3:european-review-of-agricultural-economics",
+      "field": "ECON",
+      "journal": "European Review of Agricultural Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.699999999999998,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 64.99999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-agricultural-economics",
+      "field": "ECON",
+      "journal": "Journal of Agricultural Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.699999999999998,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 64.99999999999999
+      }
+    },
+    {
+      "id": "econ:3:public-choice",
+      "field": "ECON",
+      "journal": "Public Choice",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 63.19999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-public-economics",
+      "field": "ECON",
+      "journal": "Journal of Public Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.6,
+        "method_penalty": 0.0,
+        "total_score": 62.83999999999999
+      }
+    },
+    {
+      "id": "econ:3:economic-policy",
+      "field": "ECON",
+      "journal": "Economic Policy",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 1.7999999999999998,
+        "method_penalty": 0.0,
+        "total_score": 62.11999999999999
+      }
+    },
+    {
+      "id": "pub-sec:3:policy-and-politics",
+      "field": "PUB SEC",
+      "journal": "Policy and Politics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 2.4,
+        "method_penalty": 0.0,
+        "total_score": 61.75999999999999
+      }
+    },
+    {
+      "id": "econ:3:american-economic-journal-economic-policy",
+      "field": "ECON",
+      "journal": "American Economic Journal: Economic Policy",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 3.0,
+        "method_penalty": 0.0,
+        "total_score": 61.39999999999999
+      }
+    },
+    {
+      "id": "pub-sec:3:international-public-management-journal",
+      "field": "PUB SEC",
+      "journal": "International Public Management Journal",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 3.0,
+        "method_penalty": 0.0,
+        "total_score": 61.39999999999999
+      }
+    },
+    {
+      "id": "pub-sec:3:american-review-of-public-administration",
+      "field": "PUB SEC",
+      "journal": "American Review of Public Administration",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 3.5999999999999996,
+        "method_penalty": 0.0,
+        "total_score": 61.03999999999999
+      }
+    },
+    {
+      "id": "pub-sec:3:journal-of-policy-analysis-and-management",
+      "field": "PUB SEC",
+      "journal": "Journal of Policy Analysis and Management",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 4.2,
+        "method_penalty": 0.0,
+        "total_score": 60.679999999999986
+      }
+    },
+    {
+      "id": "pub-sec:3:policy-studies-journal",
+      "field": "PUB SEC",
+      "journal": "Policy Studies Journal",
+      "ajg_2024": "3",
+      "ajg_2021": "None",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 4.2,
+        "method_penalty": 0.0,
+        "total_score": 60.679999999999986
+      }
+    },
+    {
+      "id": "pub-sec:3:journal-of-european-public-policy",
+      "field": "PUB SEC",
+      "journal": "Journal of European Public Policy",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 7.399999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 4.8,
+        "method_penalty": 0.0,
+        "total_score": 60.319999999999986
+      }
+    },
+    {
+      "id": "econ:3:economic-development-and-cultural-change",
+      "field": "ECON",
+      "journal": "Economic Development and Cultural Change",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.99999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-urban-economics",
+      "field": "ECON",
+      "journal": "Journal of Urban Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.99999999999999
+      }
+    },
+    {
+      "id": "econ:3:world-bank-economic-review",
+      "field": "ECON",
+      "journal": "World Bank Economic Review",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.79999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-development-economics",
+      "field": "ECON",
+      "journal": "Journal of Development Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.6,
+        "method_penalty": 0.0,
+        "total_score": 59.63999999999999
+      }
+    },
+    {
+      "id": "econ:3:cambridge-journal-of-economics",
+      "field": "ECON",
+      "journal": "Cambridge Journal of Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:canadian-journal-of-economics",
+      "field": "ECON",
+      "journal": "Canadian Journal of Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:economic-inquiry",
+      "field": "ECON",
+      "journal": "Economic Inquiry",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:economica",
+      "field": "ECON",
+      "journal": "Economica",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:economics-letters",
+      "field": "ECON",
+      "journal": "Economics Letters",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:environmental-and-resource-economics",
+      "field": "ECON",
+      "journal": "Environmental and Resource Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:european-economic-review",
+      "field": "ECON",
+      "journal": "European Economic Review",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:experimental-economics",
+      "field": "ECON",
+      "journal": "Experimental Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:games-and-economic-behavior",
+      "field": "ECON",
+      "journal": "Games and Economic Behavior",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:health-economics-united-kingdom",
+      "field": "ECON",
+      "journal": "Health Economics (United Kingdom)",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:imf-economic-review",
+      "field": "ECON",
+      "journal": "IMF Economic Review",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:international-journal-of-industrial-organization",
+      "field": "ECON",
+      "journal": "International Journal of Industrial Organization",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-comparative-economics",
+      "field": "ECON",
+      "journal": "Journal of Comparative Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-economic-behavior-and-organization",
+      "field": "ECON",
+      "journal": "Journal of Economic Behavior and Organization",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-economic-dynamics-and-control",
+      "field": "ECON",
+      "journal": "Journal of Economic Dynamics and Control",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-health-economics",
+      "field": "ECON",
+      "journal": "Journal of Health Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-human-capital",
+      "field": "ECON",
+      "journal": "Journal of Human Capital",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-industrial-economics",
+      "field": "ECON",
+      "journal": "Journal of Industrial Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-institutional-economics",
+      "field": "ECON",
+      "journal": "Journal of Institutional Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-law-and-economics",
+      "field": "ECON",
+      "journal": "Journal of Law and Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-law-economics-and-organization",
+      "field": "ECON",
+      "journal": "Journal of Law, Economics, and Organization",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-legal-studies",
+      "field": "ECON",
+      "journal": "Journal of Legal Studies",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-multivariate-analysis",
+      "field": "ECON",
+      "journal": "Journal of Multivariate Analysis",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-population-economics",
+      "field": "ECON",
+      "journal": "Journal of Population Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-risk-and-uncertainty",
+      "field": "ECON",
+      "journal": "Journal of Risk and Uncertainty",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:journal-of-time-series-analysis",
+      "field": "ECON",
+      "journal": "Journal of Time Series Analysis",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:labour-economics",
+      "field": "ECON",
+      "journal": "Labour Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:land-economics",
+      "field": "ECON",
+      "journal": "Land Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:oxford-economic-papers",
+      "field": "ECON",
+      "journal": "Oxford Economic Papers",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:real-estate-economics",
+      "field": "ECON",
+      "journal": "Real Estate Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:review-of-economic-dynamics",
+      "field": "ECON",
+      "journal": "Review of Economic Dynamics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:review-of-income-and-wealth",
+      "field": "ECON",
+      "journal": "Review of Income and Wealth",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    },
+    {
+      "id": "econ:3:scandinavian-journal-of-economics",
+      "field": "ECON",
+      "journal": "Scandinavian Journal of Economics",
+      "ajg_2024": "3",
+      "ajg_2021": "3",
+      "signals": {
+        "fit_score": 6.899999999999999,
+        "easy_score": 2.0,
+        "value_score": 3.0,
+        "prestige_penalty": 0.0,
+        "method_penalty": 0.0,
+        "total_score": 59.39999999999999
+      }
+    }
+  ]
+}

@@ -61,7 +61,9 @@ python3 scripts/ajg_fetch.py \
    - 星级过滤（重要）：`--rating_filter` **留空** 时，会按 mode 自动分层（easy=1,2；medium=2,3；hard=4,4*）；若 **显式传入** `--rating_filter`，则会覆盖默认分层，可能导致三段星级过滤一致（不符合 easy/medium/hard 分层预期）。
    - AI **只能在候选池内** 输出三类 TopK（easy/medium/hard），并为每条补充 `期刊主题`（解释性摘要）。三类默认各 10 本且不重叠。
    - 脚本做 **候选池子集校验**（禁止候选池外期刊）；通过后生成固定列 Markdown 报告：
-     `序号 | 期刊名 | ABS星级 | 期刊主题`。
+     `序号 | 期刊名 | ABS星级 | Field | 期刊主题`。
+     - `Field`: AJG CSV 的领域分类（如 ECON, FINANCE），用于快速定位期刊所属领域
+     - `期刊主题`: AI 根据论文内容生成的推荐理由，说明该期刊与论文的匹配度
 3) 更新流程：
    - 检查 `AJG_EMAIL/AJG_PASSWORD` 是否存在；缺失则给出可复制的 export 提示。
    - 运行抓取脚本写入 `assets/data/`。

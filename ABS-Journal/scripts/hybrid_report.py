@@ -104,8 +104,8 @@ def render_table(
     lines: List[str] = []
     lines.append(f"### {bucket_title}")
     lines.append("")
-    lines.append("| 序号 | 期刊名 | ABS星级 | Field |")
-    lines.append("|---:|---|---:|---|")
+    lines.append("| 序号 | 期刊名 | ABS星级 | Field | 期刊主题 |")
+    lines.append("|---:|---|---:|---|---|")
 
     count = 0
     for i, it in enumerate(items, 1):
@@ -115,7 +115,8 @@ def render_table(
         cand = idx.get(j) or {}
         rating = star_label(str(cand.get("ajg_2024") or ""))
         field = (cand.get("field") or "").strip()
-        lines.append(f"| {i} | {md_escape(j)} | {md_escape(rating)} | {md_escape(field)} |")
+        topic = (it.get("topic") or "").strip()
+        lines.append(f"| {i} | {md_escape(j)} | {md_escape(rating)} | {md_escape(field)} | {md_escape(topic)} |")
         count += 1
     lines.append("")
     return "\n".join(lines)
@@ -219,7 +220,9 @@ def render_report(
         lines.append("")
     lines.append("## 说明")
     lines.append("")
-    lines.append("- `Field` 来自候选池（AJG CSV 的 Field 列），用于快速定位期刊所属领域。")
+    lines.append("- `Field` 来自 AJG CSV，用于快速定位期刊所属领域。")
+    lines.append("- `期刊主题` 由 AI 根据论文内容生成，说明该期刊与论文的匹配理由。")
+    lines.append("- `ABS星级` 来自 AJG 2024 数据库（1-4*，星级越高影响力越大）。")
     lines.append("- 本流程不自动联网查询审稿周期/版面费/投稿偏好等信息。")
     return "\n".join(lines)
 
