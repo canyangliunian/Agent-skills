@@ -160,4 +160,39 @@
 ## 2026-02-08
 - 复现：运行 `python3 scripts/abs_journal.py recommend --hybrid ... --auto_ai`，确认代码默认星级分层可正常生效（easy=1,2；medium=2,3；hard=4,4*），问题不在实现。
 - 定位：发现 `SKILL.md` 与 `references/abs_journal_recommend.md` 中示例仍显式传入 `--rating_filter`（如 `1,2,3`），覆盖默认分层，导致用户/AI 照抄后出现三段星级过滤一致。
-- 计划：按 $writing-skills（TDD）修正文档与 reference 示例，并补充“如何验证 meta 的 rating_filter”检查点。
+- 计划：按 $writing-skills（TDD）修正文档与 reference 示例，并补充"如何验证 meta 的 rating_filter"检查点。
+
+## 2026-02-08（Session 5ad953f2 问题诊断）
+- 读取候选池 JSON 文件（`reports/candidate_pool_{easy,medium,hard}.json`）
+- 发现根因：显式传入 `--rating_filter` 后，经过主题贴合 gating，低星级期刊被完全过滤
+  - Easy: `--rating_filter 1,2`，可用 `{"1": 0, "2": 106}`，ideal_balanced_pool_size = 0
+  - Medium: `--rating_filter 2,3`，可用 `{"2": 0, "3": 53}`，ideal_balanced_pool_size = 0
+  - Hard: `--rating_filter 4,4*`，可用 `{"4": 21, "4*": 6}`，分布 21:6（非 1:1）
+- 代码 `rebalance_by_rating_quota` 逻辑正确，正确处理了"某星级无可用期刊"的场景
+- 问题本质：用户传入显式 `--rating_filter` 与论文主题（"test"）的组合导致低星级无匹配
+- 更新规划文件（task_plan.md 和 findings.md）记录问题分析和修复方案选项
+
+## 2026-02-08（实现方案 A：按星级分层 gating）
+- 实现：扩展 `GatingMeta` dataclass，添加 `per_rating_stats` 字段
+- 实现：修改 `gate_by_topic_fit` 函数，支持按星级分层 gating（V2）
+- 实现：添加 `_gate_by_topic_fit_per_rating` 函数
+- 实现：添加 `_rating_sort_key` 辅助函数
+- 实现：更新 `build_ranked` 调用，传入 `rating_filter` 参数
+- 实现：更新 `candidate_pool_to_dict` 函数，输出 `per_rating_stats`
+- 修复错误：添加 `from dataclasses import dataclass, field`
+- 验证测试：`python3 scripts/test_recommendation_gating.py` 通过
+- 验证测试：`python3 scripts/test_hybrid_flow.py` 通过
+- 验证实际运行：`--hybrid` 流程生成的候选池
+  - Easy: `{"1": 80, "2": 80}`，ideal_balanced_pool_size = 160
+  - Medium: `{"2": 80, "3": 80}`，ideal_balanced_pool_size = 160
+  - Hard: `{"4": 41, "4*": 15}`，ideal_balanced_pool_size = 30
+  - Gating per-rating 统计正确输出
+- 更新规划文件（task_plan.md）标记 Phase 1-3 为 complete
+
+## 2026-02-08（完成 Phase 4：文档更新）
+- 更新 `references/abs_journal_recommend.md`：
+  - 补充"按星级分层 gating"策略说明
+  - 明确各星级内的主题贴合排序逻辑
+  - 添加可追溯信息说明（`meta.gating.per_rating_stats`）
+  - 更新星级均衡相关文档
+- 更新 task_plan.md 标记所有 phases 为 complete

@@ -95,8 +95,16 @@ python3 scripts/abs_journal.py \
 - 若 AI 输出包含候选池之外的期刊名，校验会失败并提示具体条目，必须让 AI 重试（禁止悄悄替换）。
 - 若缺少 easy/medium/hard 任一键，或任一组少于 TopK=10 条，或 topic 为空，将直接报错退出。
 - `期刊主题` 为 AI 解释性摘要，用于解释与论文主题的匹配关系；不是期刊官方 Aims&Scope。
-- 星级过滤（重要）：`--rating_filter` 留空时，脚本会按 mode 自动分层（easy=1,2；medium=2,3；hard=4,4*）。**显式传入** `--rating_filter` 会覆盖默认分层，可能导致三段星级过滤一致（不符合 easy/medium/hard 分层预期）。
-- 候选池星级均衡（重要）：在导出候选池 JSON 时，脚本会在“当前模式允许的星级集合”内做 **尽量 1:1** 的均衡采样（例如 easy 让 1 与 2 数量尽量接近；hard 让 4 与 4* 尽量接近）。若某星级天然不足（例如你这次 test 的 easy 桶里 `AJG 2024=1` 在主题贴合候选集中为 0），则该桶无法做到严格 1:1；此时会在候选池 `meta.rating_rebalance.available_by_rating` / `selected_by_rating` 里记录“为何某档很少/为零”。
+- 星级过滤（重要）：`--rating_filter` 留空时，脚本会按 mode 自动分层（easy=1,2；medium=2,3；hard=4,4*）。**显式传入** `--rating_filter` 会覆盖默认分层，可能导致三段星级过滤一致（不符合 easy/medium/hard 分层预期）。建议：混合流程通常不传 `--rating_filter`，让脚本使用默认分层。
+- 候选池星级均衡（重要）：
+  - **Gating 策略**：为确保各星级都有足够候选，脚本使用"按星级分层 gating"策略：
+    - 当指定 `rating_filter` 时，系统会先按星级分组期刊
+    - 在每个星级内分别进行主题贴合排序（按 fit_score）
+    - 确保每个星级都有足够的候选（默认各星级至少 80 本）
+    - 合并各星级的 gated 结果后，再进行评分排序
+  - **均衡采样**：在导出候选池 JSON 时，脚本会在"当前模式允许的星级集合"内做 **尽量 1:1** 的均衡采样（例如 easy 让 1 与 2 数量尽量接近；hard 让 4 与 4* 尽量接近）。
+  - **可追溯信息**：候选池 `meta.gating.per_rating_stats` 记录各星级在 gating 阶段的候选数量，`meta.rating_rebalance.available_by_rating` / `selected_by_rating` 记录最终可用与选中的数量。
+  - **限制说明**：若某星级天然不足（例如 4* 星级只有 15 本，4 星级有 41 本），则该桶无法做到严格 1:1；此时会在 meta 中记录实际分布。
 - `--auto_ai`（离线自动二次筛选）默认会**尽量避免** easy/medium/hard 三桶重复期刊；但当某桶候选池较小、严格去重会导致 TopK 不足时，会允许跨桶重复以保证流程可运行（该行为会在 `reports/ai_output.json` 的 `meta.allow_overlap=true` 体现）。
 
 重要说明（避免你这次发现的“又重新跑了一次 medium”的误解）：

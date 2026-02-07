@@ -26,7 +26,7 @@ import datetime as _dt
 import json
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Tuple, Optional
 
 from abs_paths import ajg_csv_default
@@ -925,6 +925,7 @@ def candidate_pool_to_dict(
             "total_before": gating_meta.total_candidates_before,
             "total_after": gating_meta.total_candidates_after,
             "fallback_used": gating_meta.fallback_used,
+            "per_rating_stats": getattr(gating_meta, "per_rating_stats", {}),
         }
 
     return {"meta": meta, "candidates": pool}
@@ -947,6 +948,8 @@ class GatingMeta:
     total_candidates_after: int
     fallback_used: bool
     field_scope_effective: List[str]
+    # 新增：按星级的统计信息（用于分层 gating 模式）
+    per_rating_stats: Dict[str, int] = field(default_factory=dict)  # 每个星级的选择数量
 
 
 def gate_by_topic_fit(
@@ -956,10 +959,25 @@ def gate_by_topic_fit(
     topk: int,
     candidate_topn: Optional[int] = None,
     min_candidates: Optional[int] = None,
+    rating_filter: Optional[str] = None,
 ) -> Tuple[List[JournalRow], Dict[str, float], GatingMeta]:
     """构造主题贴合候选集（TopN + 回退）。
 
-    V1 策略：先按 fit_score 降序取 TopN 作为候选集；若候选过少则扩大 TopN 直至满足 min_candidates。
+    V2 策略（支持按星级分层）：
+    - 如果提供 rating_filter，在每个星级内分别进行主题贴合 gating
+    - 确保每个星级都有足够候选（默认各星级至少 20 本）
+    - 如果不提供 rating_filter，使用原有统一排序策略
+
+    Args:
+        paper: 论文信息
+        candidates: 待筛选期刊列表
+        topk: 输出期刊数
+        candidate_topn: 每星级最大候选数（None 表示使用默认值）
+        min_candidates: 每星级最小候选数（None 表示使用默认值）
+        rating_filter: 星级过滤（逗号分隔，如 "1,2,3"），为空则不按星级分层
+
+    Returns:
+        (gated, fit_map, meta): 筛选后的期刊列表，fit_score 映射，元数据
     """
 
     total_before = len(candidates)
@@ -972,9 +990,27 @@ def gate_by_topic_fit(
             total_candidates_after=0,
             fallback_used=False,
             field_scope_effective=[],
+            per_rating_stats={},
         )
         return [], {}, meta
 
+    # 解析星级过滤
+    allowed_ratings = set()
+    if rating_filter:
+        allowed_ratings = {x.strip() for x in rating_filter.split(",") if x.strip()}
+
+    # 如果指定了星级过滤，使用分层 gating 策略
+    if allowed_ratings:
+        return _gate_by_topic_fit_per_rating(
+            paper,
+            candidates,
+            topk=topk,
+            candidate_topn=candidate_topn,
+            min_candidates=min_candidates,
+            allowed_ratings=allowed_ratings,
+        )
+
+    # 否则使用原有统一排序策略（V1）
     default_topn = max(topk * 8, 80)
     default_min_candidates = max(topk, 20)
     candidate_topn = int(candidate_topn or default_topn)
@@ -1000,8 +1036,90 @@ def gate_by_topic_fit(
         total_candidates_after=len(gated),
         fallback_used=fallback_used,
         field_scope_effective=[],
+        per_rating_stats={},
     )
     return gated, fit_map, meta
+
+
+def _gate_by_topic_fit_per_rating(
+    paper: PaperProfile,
+    candidates: List[JournalRow],
+    *,
+    topk: int,
+    candidate_topn: Optional[int],
+    min_candidates: Optional[int],
+    allowed_ratings: Set[str],
+) -> Tuple[List[JournalRow], Dict[str, float], GatingMeta]:
+    """按星级分层进行主题贴合 gating。
+
+    在每个星级内分别进行主题贴合排序，确保每个星级都有足够候选。
+    合并所有星级的筛选结果后返回。
+    """
+
+    total_before = len(candidates)
+
+    # 默认参数
+    default_topn = max(topk * 8, 80)
+    default_min_candidates = max(topk, 20)
+    per_rating_topn = int(candidate_topn or default_topn)
+    per_rating_min = int(min_candidates or default_min_candidates)
+
+    # 按星级分组
+    by_rating: Dict[str, List[JournalRow]] = {r: [] for r in allowed_ratings}
+    for j in candidates:
+        r = (j.ajg_2024 or "").strip()
+        if r in by_rating:
+            by_rating[r].append(j)
+
+    # 在每个星级内进行主题贴合 gating
+    gated_all: List[JournalRow] = []
+    fit_map_all: Dict[str, float] = {}
+    per_rating_stats: Dict[str, int] = {}
+    total_gated = 0
+    fallback_used = False
+
+    for rating in sorted(allowed_ratings, key=_rating_sort_key):
+        journals = by_rating.get(rating, [])
+        if not journals:
+            continue
+
+        # 计算主题贴合分数并排序
+        scored = [(j, fit_score(paper, j)) for j in journals]
+        scored.sort(key=lambda x: x[1], reverse=True)
+
+        # 选择候选（考虑回退）
+        chosen = min(per_rating_topn, len(scored))
+        if chosen < per_rating_min:
+            chosen = min(per_rating_min, len(scored))
+            fallback_used = True
+
+        # 提取选中的期刊
+        for j, s in scored[:chosen]:
+            gated_all.append(j)
+            fit_map_all[j.title] = s
+
+        per_rating_stats[rating] = chosen
+        total_gated += chosen
+
+    # 构建 meta
+    meta = GatingMeta(
+        strategy="topn-per-rating",
+        candidate_topn=per_rating_topn,
+        min_candidates=per_rating_min,
+        total_candidates_before=total_before,
+        total_candidates_after=total_gated,
+        fallback_used=fallback_used,
+        field_scope_effective=[],
+        per_rating_stats=per_rating_stats,
+    )
+
+    return gated_all, fit_map_all, meta
+
+
+def _rating_sort_key(rating: str) -> int:
+    """返回星级的排序键（用于一致性排序）。"""
+    order = {"1": 1, "2": 2, "3": 3, "4": 4, "4*": 5}
+    return order.get(rating, 999)
 
 
 def main() -> int:
@@ -1066,8 +1184,19 @@ def main() -> int:
 
     cand = [r for r in rows if r.field in set(field_scope_effective)]
 
+    # Parse rating filter once for use in gating.
+    rating_filter = (args.rating_filter or "").strip()
+
     def build_ranked(*, candidate_topn: Optional[int]) -> Tuple[List[Tuple[JournalRow, Dict[str, float]]], GatingMeta]:
-        gated, fit_map, gmeta = gate_by_topic_fit(paper, cand, topk=args.topk, candidate_topn=candidate_topn)
+        # Pass rating_filter to gate_by_topic_fit for per-rating gating (V2).
+        gated, fit_map, gmeta = gate_by_topic_fit(
+            paper, cand,
+            topk=args.topk,
+            candidate_topn=candidate_topn,
+            rating_filter=rating_filter or None,
+        )
+        # Preserve per-rating stats from gating meta.
+        per_rating_stats = getattr(gmeta, "per_rating_stats", {})
         gmeta = GatingMeta(
             strategy=gmeta.strategy,
             candidate_topn=gmeta.candidate_topn,
@@ -1076,6 +1205,7 @@ def main() -> int:
             total_candidates_after=gmeta.total_candidates_after,
             fallback_used=gmeta.fallback_used,
             field_scope_effective=list(field_scope_effective),
+            per_rating_stats=per_rating_stats,
         )
         scored_local: List[Tuple[JournalRow, Dict[str, float]]] = []
         for j in gated:
@@ -1085,22 +1215,30 @@ def main() -> int:
         scored_local.sort(key=lambda x: x[1]["total"], reverse=True)
         return scored_local, gmeta
 
-    # Phase 1: normal gating.
+    # Phase 1: normal gating (with per-rating support if rating_filter is set).
     scored, gmeta = build_ranked(candidate_topn=None)
 
-    # Apply rating filter (if any) and check TopK sufficiency.
-    rating_filter = (args.rating_filter or "").strip()
+    # After per-rating gating (V2), filtering is already done within gating.
+    # We only need to apply rating filter here if V1 gating was used.
     allowed = {x.strip() for x in rating_filter.split(",") if x.strip()} if rating_filter else set()
+    # Check if per-rating gating was used: strategy contains "per-rating"
+    used_per_rating_gating = "per-rating" in gmeta.strategy
+
     filtered = scored
-    if allowed:
+    if allowed and not used_per_rating_gating:
+        # V1 gating: apply rating filter after gating.
         filtered = [x for x in scored if (x[0].ajg_2024 or "").strip() in allowed]
 
     # Phase 2 fallback: if filtered is too small, expand the gating candidate_topn.
-    # This keeps the same rating_filter, but looks at a wider topic-fit candidate pool.
+    # With per-rating gating (V2), this fallback is less critical since each rating
+    # already has guaranteed minimum candidates. We still keep it for safety.
     if allowed and len(filtered) < int(args.topk):
         expanded_topn = max(gmeta.candidate_topn * 2, gmeta.candidate_topn + 80, int(args.topk) * 20)
         scored2, gmeta2 = build_ranked(candidate_topn=expanded_topn)
-        filtered2 = [x for x in scored2 if (x[0].ajg_2024 or "").strip() in allowed]
+        # Use same filtering logic as above.
+        filtered2 = scored2
+        if allowed and not used_per_rating_gating:
+            filtered2 = [x for x in scored2 if (x[0].ajg_2024 or "").strip() in allowed]
         if len(filtered2) >= len(filtered):
             scored = scored2
             gmeta = gmeta2

@@ -1,125 +1,78 @@
-# Task Plan：ABS-Journal 路径可移植化
-<!-- 
-  WHAT: This is your roadmap for the entire task. Think of it as your "working memory on disk."
-  WHY: After 50+ tool calls, your original goals can get forgotten. This file keeps them fresh.
-  WHEN: Create this FIRST, before starting any work. Update after each phase completes.
--->
+# Task Plan：ABS-Journal 候选池 1:1 星级均衡问题诊断与修复
 
 ## Goal
-- 修复候选池 JSON 的星级分布：在 `easy/medium/hard` 各自允许的星级集合内，尽量实现 **1:1**（数量尽量均衡）；不够再按“同桶内相邻星级优先”补齐。
-- 作用范围：仅影响 `--export_candidate_pool_json` 导出的候选池内容与其 `meta`；不改变 stdout 的推荐表输出与 CLI 参数语义。
+- 诊断并修复候选池 JSON 星级分布不满足 1:1 的问题
+- 根因：显式传入 `--rating_filter` 后，某些星级可能没有足够期刊满足主题贴合条件
 
-## Non-goals
-- 不联网更新 AJG 数据。
-- 不改变评分函数、主题贴合 gating 策略的定义（仍按现有逻辑得到候选序列）。
-- 不把“均衡”责任丢给 AI 提示词（提示词/文档可补充说明，但不作为主要约束手段）。
+## 当前问题发现（修复前）
+- Easy 模式：`--rating_filter 1,2`，但可用星级分布为 `{"1": 0, "2": 106}`
+- Medium 模式：`--rating_filter 2,3`，但可用星级分布为 `{"2": 0, "3": 53}`
+- 结果：无法实现 1:1 均衡，因为低星级没有可用期刊
+- `ideal_balanced_pool_size = 0`（由 min(0, 106) 计算得出）
+
+## 根因分析
+1. **显式 `--rating_filter` 覆盖默认分层逻辑**
+2. **主题贴合 gating 后，某些星级完全被过滤掉**
+3. **代码中 `rebalance_by_rating_quota` 正确处理了这种情况，但结果就是无法 1:1**
 
 ## Current Phase
-<!-- 
-  WHAT: Which phase you're currently working on (e.g., "Phase 1", "Phase 3").
-  WHY: Quick reference for where you are in the task. Update this as you progress.
--->
-Phase 4（更新说明与收尾）
+All phases complete
 
 ## Phases
-<!-- 
-  WHAT: Break your task into 3-7 logical phases. Each phase should be completable.
-  WHY: Breaking work into phases prevents overwhelm and makes progress visible.
-  WHEN: Update status after completing each phase: pending → in_progress → complete
--->
 
-### Phase 1: Requirements & Discovery（定位候选池导出逻辑）
-<!-- 
-  WHAT: Understand what needs to be done and gather initial information.
-  WHY: Starting without understanding leads to wasted effort. This phase prevents that.
--->
-- [x] 定位候选池导出逻辑（`scripts/abs_article_impl.py` / `scripts/abs_journal.py`）
-- [x] 明确“1:1”的落点与补齐规则（候选池内均衡；同桶相邻星级补齐）
-- **Status:** complete
-<!-- 
-  STATUS VALUES:
-  - pending: Not started yet
-  - in_progress: Currently working on this
-  - complete: Finished this phase
--->
-
-### Phase 2: Implementation（实现候选池星级均衡）
-<!-- 
-  WHAT: Decide how you'll approach the problem and what structure you'll use.
-  WHY: Good planning prevents rework. Document decisions so you remember why you chose them.
--->
-- [x] 在候选池导出前加入“按星级配额均衡采样”函数（尽量 1:1）
-- [x] 写入候选池 `meta.rating_rebalance`（记录可用/选择/是否补齐/是否总量不足）
-- [x] 保持现有 `--rating_filter` 语义：显式传入仍覆盖默认星级集合
+### Phase 1: 问题诊断与方案设计
+- [x] 分析候选池 JSON 的 `rating_rebalance` meta 数据
+- [x] 确认问题：显式传入 `--rating_filter` 后，某些星级因主题贴合 gating 被完全过滤
+- [x] 分析完整链路：
+  - Phase 1 gating: 跨星级统一按 fit_score 排序，取 TopN（默认 80）
+  - Phase 2 fallback: 扩大到 200 后仍无低星级期刊
+  - 根因: 低星级期刊的平均主题贴合度较低，TopN 中被完全过滤
+- [x] 设计修复方案（方案 A：按星级分层 gating）
 - **Status:** complete
 
-### Phase 3: Testing & Verification（最小自测）
-<!-- 
-  WHAT: Actually build/create/write the solution.
-  WHY: This is where the work happens. Break into smaller sub-tasks if needed.
--->
-- [x] 运行一次 `--hybrid --auto_ai ...` 生成三段候选池 JSON
-- [x] 统计各候选池内允许星级分布，验证差值 <= 1（在总量足够时）
-- [x] 覆盖不足场景：记录 `meta.rating_rebalance` 的补齐与不足标记正确
+### Phase 2: 实现修复（方案 A：按星级分层 gating）
+- [x] 扩展 `GatingMeta` dataclass，添加 `per_rating_stats` 字段
+- [x] 修改 `gate_by_topic_fit` 函数，支持按星级分层 gating（V2）
+- [x] 添加 `_gate_by_topic_fit_per_rating` 函数，在每个星级内分别进行主题贴合排序
+- [x] 添加 `_rating_sort_key` 辅助函数，用于星级排序
+- [x] 更新 `build_ranked` 调用，传入 `rating_filter` 参数
+- [x] 更新 `candidate_pool_to_dict` 函数，输出 `per_rating_stats`
 - **Status:** complete
 
-### Phase 4: Delivery（更新说明）
-<!-- 
-  WHAT: Verify everything works and meets requirements.
-  WHY: Catching issues early saves time. Document test results in progress.md.
--->
-- [x] 更新 `references/abs_journal_recommend.md`（说明候选池会尽量均衡星级，并在 meta 记录）
+### Phase 3: 验证测试
+- [x] 运行完整混合流程，验证候选池星级分布接近 1:1
+- [x] 检查 `ideal_balanced_pool_size > 0`
+  - Easy: 160 (从 0 → 160)
+  - Medium: 160 (从 0 → 160)
+  - Hard: 30 (从 0 → 30)
+- [x] 验证 per-rating 统计正确输出
+  - Easy: {'1': 80, '2': 80} - 完美 1:1
+  - Medium: {'2': 80, '3': 80} - 完美 1:1
+  - Hard: {'4': 41, '4*': 15} - 接近 1:1（受限于可用量）
 - **Status:** complete
 
-<!-- Phase 5 removed: merged into Phase 4 -->
+### Phase 4: 文档更新
+- [x] 更新 `references/abs_journal_recommend.md` 说明新的 gating 策略
+- **Status:** complete
 
 ## Key Questions
-<!-- 
-  WHAT: Important questions you need to answer during the task.
-  WHY: These guide your research and decision-making. Answer them as you go.
-  EXAMPLE: 
-    1. Should tasks persist between sessions? (Yes - need file storage)
-    2. What format for storing tasks? (JSON file)
--->
-1. [Question to answer]
-2. [Question to answer]
+1. [已解决] 如何确保各星级都有足够候选？→ 按星级分层进行主题贴合 gating
+2. [已解决] 如何记录各星级的候选数量？→ GatingMeta.per_rating_stats
 
 ## Decisions Made
-<!-- 
-  WHAT: Technical and design decisions you've made, with the reasoning behind them.
-  WHY: You'll forget why you made choices. This table helps you remember and justify decisions.
-  WHEN: Update whenever you make a significant choice (technology, approach, structure).
-  EXAMPLE:
-    | Use JSON for storage | Simple, human-readable, built-in Python support |
--->
 | Decision | Rationale |
 |----------|-----------|
-|          |           |
+| 按星级分层 gating（方案 A）| 根本解决问题，确保各星级都有候选 |
+| 扩展 GatingMeta 数据结构| 记录各星级的候选数量，便于调试和验证 |
+| 兼容原有 V1 逻辑| 如果不传 rating_filter，使用原有统一排序策略 |
 
 ## Errors Encountered
-<!-- 
-  WHAT: Every error you encounter, what attempt number it was, and how you resolved it.
-  WHY: Logging errors prevents repeating the same mistakes. This is critical for learning.
-  WHEN: Add immediately when an error occurs, even if you fix it quickly.
-  EXAMPLE:
-    | FileNotFoundError | 1 | Check if file exists, create empty list if not |
-    | JSONDecodeError | 2 | Handle empty file case explicitly |
--->
 | Error | Attempt | Resolution |
 |-------|---------|------------|
-|       | 1       |            |
+| NameError: name 'field' is not defined | 1 | 添加 `from dataclasses import dataclass, field` |
 
 ## Notes
-<!-- 
-  REMINDERS:
-  - Update phase status as you progress: pending → in_progress → complete
-  - Re-read this plan before major decisions (attention manipulation)
-  - Log ALL errors - they help avoid repetition
-  - Never repeat a failed action - mutate your approach instead
--->
 - Update phase status as you progress: pending → in_progress → complete
 - Re-read this plan before major decisions (attention manipulation)
 - Log ALL errors - they help avoid repetition
-
-
-<!-- 旧任务已归档：此前关于“报告固定列”的计划不再适用本次目标 -->
+- Never repeat a failed action - mutate your approach instead
