@@ -107,6 +107,7 @@ python3 scripts/abs_journal.py \
 - 若缺少 easy/medium/hard 任一键，或任一组少于 TopK=10 条，或 topic 为空，将直接报错退出。
 - `期刊主题` 为 AI 解释性摘要，用于解释与论文主题的匹配关系；不是期刊官方 Aims&Scope。
 - 星级过滤（重要）：`--rating_filter` 留空时，脚本会按 mode 自动分层（easy=1,2；medium=2,3；hard=4,4*）。**显式传入** `--rating_filter` 会覆盖默认分层，可能导致三段星级过滤一致（不符合 easy/medium/hard 分层预期）。
+- 候选池星级均衡（重要）：在导出候选池 JSON 时，脚本会在“当前模式允许的星级集合”内做 **尽量 1:1** 的均衡采样（例如 easy 尽量让 1 与 2 数量接近）。若某星级天然不足，则会按同桶相邻星级补齐，并在候选池 `meta.rating_rebalance` 里记录可用/选择情况，便于排查“为何某档很少/为零”。
 
 重要说明（避免你这次发现的“又重新跑了一次 medium”的误解）：
 - `--hybrid` 模式下，脚本会**一次性生成 easy/medium/hard 三个候选池**，文件名为：

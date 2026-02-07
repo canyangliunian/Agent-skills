@@ -602,6 +602,222 @@ def stable_journal_id(j: JournalRow) -> str:
     return f"{field}:{rating}:{title}"
 
 
+def _normalize_allowed_ratings(raw: str, *, mode: str) -> List[str]:
+    """Normalize rating filter to an ordered list for rebalancing.
+
+    Ordering is important for deterministic quota remainder allocation and for the
+    "adjacent within-bucket" fill policy:
+    - easy: ["1", "2"]
+    - medium: ["2", "3"]
+    - hard: ["4", "4*"]
+    """
+
+    tokens = [x.strip() for x in (raw or "").split(",") if x.strip()]
+    default_order = {
+        "easy": ["1", "2"],
+        "medium": ["2", "3"],
+        "hard": ["4", "4*"],
+    }.get((mode or "").strip(), [])
+
+    if tokens:
+        token_set = set(tokens)
+        known = [t for t in default_order if t in token_set]
+        extra = sorted([t for t in tokens if t not in set(default_order)])
+        out = known + extra
+        return out
+
+    return list(default_order)
+
+
+def _estimate_balanced_pool_size(
+    available_by_rating: Dict[str, int],
+    *,
+    allowed_ratings: List[str],
+    min_pool_size: int,
+    max_pool_size: int,
+) -> int:
+    """Pick an export pool size that prefers 1:1, but never below min_pool_size.
+
+    Strategy:
+    - If all ratings have plenty, use max_pool_size.
+    - If one rating is scarce, use k * min(available) (perfect 1:1), but not below min_pool_size.
+    - If even min_pool_size cannot be achieved without breaking 1:1, we still return min_pool_size
+      and allow fill from adjacent ratings during selection.
+    """
+
+    allowed_ratings = [r for r in (allowed_ratings or []) if r]
+    if not allowed_ratings:
+        return int(min_pool_size)
+
+    k = len(allowed_ratings)
+    mins = []
+    for r in allowed_ratings:
+        mins.append(int(available_by_rating.get(r, 0)))
+    min_avail = min(mins) if mins else 0
+    balanced_cap = int(k * min_avail) if min_avail > 0 else 0
+    target = balanced_cap if balanced_cap > 0 else int(max_pool_size)
+    target = max(int(min_pool_size), int(target))
+    target = min(int(max_pool_size), int(target))
+    return int(target)
+
+
+def rebalance_by_rating_quota(
+    ranked: List[Tuple[JournalRow, Dict[str, float]]],
+    *,
+    allowed_ratings: List[str],
+    target_n: int,
+    mode: str,
+) -> Tuple[List[Tuple[JournalRow, Dict[str, float]]], Dict[str, object]]:
+    """Rebalance exported candidate pools to be as 1:1 as possible across allowed ratings.
+
+    Policy:
+    - Best-effort 1:1 across `allowed_ratings` inside the same mode bucket.
+    - If a rating lacks enough candidates, fill from the adjacent rating within the same bucket
+      (easy: 1<->2; medium: 2<->3; hard: 4<->4*).
+    - Keep stable ordering by consuming from the ranked lists; never invent new journals.
+    """
+
+    mode = (mode or "").strip()
+    allowed_ratings = [r for r in (allowed_ratings or []) if r]
+    if target_n <= 0 or not ranked or not allowed_ratings:
+        meta: Dict[str, object] = {
+            "enabled": True,
+            "allowed_ratings": list(allowed_ratings),
+            "target_pool_size": int(max(target_n, 0)),
+            "available_by_rating": {},
+            "selected_by_rating": {},
+            "filled": False,
+            "insufficient_total_candidates": True,
+        }
+        return ranked[: max(target_n, 0)], meta
+
+    by_rating: Dict[str, List[Tuple[JournalRow, Dict[str, float]]]] = {r: [] for r in allowed_ratings}
+    for it in ranked:
+        j, _ = it
+        r = (j.ajg_2024 or "").strip()
+        if r in by_rating:
+            by_rating[r].append(it)
+
+    available_by_rating = {r: len(by_rating.get(r) or []) for r in allowed_ratings}
+    available_total = sum(int(available_by_rating.get(r, 0)) for r in allowed_ratings)
+
+    k = len(allowed_ratings)
+    min_avail = min(int(available_by_rating.get(r, 0)) for r in allowed_ratings) if allowed_ratings else 0
+    ideal_balanced_size = int(k * min_avail) if min_avail > 0 else 0
+
+    # Prefer the balanced size (1:1) when possible; ensure at least target_n if caller
+    # explicitly requests a smaller pool (e.g., for performance), but never exceed availability.
+    target_n_eff = min(int(target_n), int(available_total))
+    if ideal_balanced_size > 0:
+        target_n_eff = min(target_n_eff, ideal_balanced_size)
+
+    # Quotas: best-effort 1:1 across allowed ratings, but never exceed availability.
+    # Start from an equal share and then distribute remainder to ratings that still have spare capacity.
+    base = target_n_eff // k
+    rem = target_n_eff % k
+    quota: Dict[str, int] = {r: min(base, int(available_by_rating.get(r, 0))) for r in allowed_ratings}
+
+    # Distribute remainder deterministically by allowed_ratings order, but only to ratings with capacity.
+    remain = target_n_eff - sum(quota.values())
+    idx = 0
+    while remain > 0 and k > 0:
+        r = allowed_ratings[idx % k]
+        cap = int(available_by_rating.get(r, 0))
+        if quota.get(r, 0) < cap:
+            quota[r] = int(quota.get(r, 0)) + 1
+            remain -= 1
+        idx += 1
+        # Safety: if we loop too much with no progress, break.
+        if idx > (k * (target_n_eff + 2)):
+            break
+
+    selected: List[Tuple[JournalRow, Dict[str, float]]] = []
+    used_ids: set = set()
+    selected_by_rating: Dict[str, int] = {r: 0 for r in allowed_ratings}
+
+    def take_from(rating: str, n: int) -> int:
+        taken = 0
+        lst = by_rating.get(rating) or []
+        while taken < n and lst:
+            item = lst.pop(0)
+            jid = stable_journal_id(item[0])
+            if jid in used_ids:
+                continue
+            used_ids.add(jid)
+            selected.append(item)
+            taken += 1
+        return taken
+
+    for r in allowed_ratings:
+        got = take_from(r, quota.get(r, 0))
+        selected_by_rating[r] += got
+
+    # Adjacent-within-bucket fill policy.
+    fill_order: List[str]
+    if mode == "easy":
+        fill_order = ["1", "2"]
+    elif mode == "medium":
+        fill_order = ["2", "3"]
+    else:
+        fill_order = ["4", "4*"]
+    fill_order = [r for r in fill_order if r in set(allowed_ratings)] or list(allowed_ratings)
+
+    def adjacent_sources(rating: str) -> List[str]:
+        if len(fill_order) != 2:
+            return [x for x in fill_order if x != rating]
+        a, b = fill_order
+        return [b] if rating == a else [a]
+
+    filled = False
+    while len(selected) < target_n_eff:
+        progress = False
+        for r in allowed_ratings:
+            if len(selected) >= target_n_eff:
+                break
+            if selected_by_rating.get(r, 0) >= quota.get(r, 0):
+                continue
+            need = quota[r] - selected_by_rating.get(r, 0)
+            got = take_from(r, need)
+            if got:
+                progress = True
+                selected_by_rating[r] += got
+                continue
+            for src in adjacent_sources(r):
+                got2 = take_from(src, need)
+                if got2:
+                    filled = True
+                    progress = True
+                    selected_by_rating[src] = selected_by_rating.get(src, 0) + got2
+                    break
+        if not progress:
+            break
+
+    # If still short but candidates remain in any allowed bucket, keep filling round-robin.
+    if len(selected) < target_n_eff:
+        for r in allowed_ratings:
+            while len(selected) < target_n_eff:
+                got = take_from(r, 1)
+                if got:
+                    filled = True
+                else:
+                    break
+            if len(selected) >= target_n_eff:
+                break
+
+    insufficient_total = len(selected) < target_n_eff
+    meta2: Dict[str, object] = {
+        "enabled": True,
+        "allowed_ratings": list(allowed_ratings),
+        "target_pool_size": int(target_n_eff),
+        "ideal_balanced_pool_size": int(ideal_balanced_size),
+        "available_by_rating": dict(available_by_rating),
+        "selected_by_rating": dict({k: int(v) for k, v in selected_by_rating.items()}),
+        "filled": bool(filled),
+        "insufficient_total_candidates": bool(insufficient_total),
+    }
+    return selected, meta2
+
+
 def candidate_pool_to_dict(
     paper: PaperProfile,
     ajg_csv_path: str,
@@ -859,10 +1075,33 @@ def main() -> int:
 
     if args.export_candidate_pool_json:
         effective = ",".join(sorted(allowed)) if allowed else ""
+        allowed_ordered = _normalize_allowed_ratings(effective or rating_filter, mode=args.mode)
+        # For exported candidate pools, prefer 1:1 as much as possible (ideal size = k * min(available)),
+        # but ensure the pool is large enough for downstream TopK selection.
+        # We use a two-pass: first compute availability by rating, then choose a target size.
+        avail_tmp: Dict[str, int] = {}
+        for j, _s in scored:
+            r = (j.ajg_2024 or "").strip()
+            if r in set(allowed_ordered):
+                avail_tmp[r] = int(avail_tmp.get(r, 0)) + 1
+        pool_min = int(args.topk) * 10
+        pool_max = min(len(scored), max(int(args.topk) * 30, 150))
+        pool_size = _estimate_balanced_pool_size(
+            avail_tmp,
+            allowed_ratings=allowed_ordered,
+            min_pool_size=min(pool_min, pool_max),
+            max_pool_size=pool_max,
+        )
+        scored_for_pool, rebalance_meta = rebalance_by_rating_quota(
+            scored,
+            allowed_ratings=allowed_ordered,
+            target_n=pool_size,
+            mode=args.mode,
+        )
         pool_obj = candidate_pool_to_dict(
             paper,
             args.ajg_csv,
-            scored,
+            scored_for_pool,
             mode=args.mode,
             gating_meta=gmeta,
             rating_filter=args.rating_filter,
@@ -870,6 +1109,9 @@ def main() -> int:
             field_scope_requested=requested_scope_raw,
             field_scope_effective=field_scope_effective,
         )
+        meta = pool_obj.get("meta")
+        if isinstance(meta, dict):
+            meta["rating_rebalance"] = rebalance_meta
         write_json(args.export_candidate_pool_json, pool_obj)
 
     return 0

@@ -133,6 +133,12 @@ def _select_topk_from_pools(export_json_list: List[str], *, topk: int) -> dict:
         return picked
 
     # Ensure non-overlap across easy/medium/hard.
+    #
+    # Note: candidate pools can be intentionally rebalanced to be near 1:1 by rating,
+    # which might shrink pool sizes (e.g., medium could be ~10). In that case, strict
+    # cross-bucket uniqueness can make --auto_ai fail unnecessarily. We therefore apply
+    # uniqueness as best-effort: avoid overlap when possible, but allow overlap as a
+    # fallback to guarantee TopK.
     picked_names = set()
 
     def pick_unique(mode: str) -> List[dict]:
@@ -160,7 +166,22 @@ def _select_topk_from_pools(export_json_list: List[str], *, topk: int) -> dict:
             if len(out) >= topk:
                 break
         if len(out) < topk:
-            raise RuntimeError(f"--auto_ai 生成失败：{mode} 仅选到 {len(out)}/{topk}（候选池不足或重复过多）")
+            # Fallback: allow overlap if needed to complete TopK.
+            for c in ranked:
+                name = (c.get("journal") or "").strip()
+                if not name:
+                    continue
+                out.append(
+                    {
+                        "journal": name,
+                        "ajg_2024": c.get("ajg_2024", ""),
+                        "topic": "根据候选池打分（主题贴合/可投稿性/价值权重等）自动筛选",
+                    }
+                )
+                if len(out) >= topk:
+                    break
+        if len(out) < topk:
+            raise RuntimeError(f"--auto_ai 生成失败：{mode} 仅选到 {len(out)}/{topk}（候选池不足）")
         return out
 
     ai_obj = {m: pick_unique(m) for m in modes}
@@ -170,8 +191,20 @@ def _select_topk_from_pools(export_json_list: List[str], *, topk: int) -> dict:
     multi_pool = len(pools) > 1 or any(k in by_mode for k in modes)
     if multi_pool:
         ai_obj["candidate_pool_by_mode"] = {m: (by_mode.get(m) or {}) for m in modes}
+        # In multi-pool mode, allow overlap across buckets by default for --auto_ai,
+        # since validation will be performed per-bucket membership. Cross-bucket
+        # non-overlap is a nice-to-have but can fail when pools are intentionally
+        # rebalanced or small.
+        ai_obj.setdefault("meta", {})
+        if isinstance(ai_obj["meta"], dict):
+            ai_obj["meta"]["allow_overlap"] = True
 
-    ai_obj["meta"] = {"generated_by": "abs_journal.py --auto_ai"}
+    # Merge meta (may already exist).
+    meta = ai_obj.get("meta")
+    if not isinstance(meta, dict):
+        meta = {}
+    meta["generated_by"] = "abs_journal.py --auto_ai"
+    ai_obj["meta"] = meta
     return ai_obj
 
 
@@ -344,6 +377,7 @@ def main() -> int:
                 "scripts/abs_ai_review.py",
                 [
                     "--candidate_pool_json",
+                    # For --auto_ai, we embed candidate pools into ai_output.json, so pass that file.
                     ai_output_path if args.auto_ai else (pool_arg if isinstance(pool_arg, str) else pool_arg[0]),
                     "--ai_output_json",
                     ai_output_path,

@@ -30,6 +30,16 @@
   - `scripts/abs_ai_review.py`：支持从 `ai_output.json.candidate_pool_by_mode` 抽取候选池做子集校验（仍保持原来的单池/多池兼容）。
   - `scripts/hybrid_report.py`：当 `ai_output.json` 内嵌候选池时，按 bucket 建索引填充 `ABS星级/Field`，并在“可追溯信息”区说明候选池来源。
 - 端到端自测（TopK=2 快速跑通）：`python3 scripts/abs_journal.py recommend --title "test" --mode medium --hybrid --export_candidate_pool_json reports/candidate_pool.json --auto_ai --ai_output_json reports/ai_output.json --ai_report_md reports/ai_report.md` 输出 `OK` 且报告三段均能填充 `ABS星级/Field`。
+
+## 2026-02-08
+- 目标切换：从“混合流程报告列调整”改为“候选池 JSON 星级分布尽量 1:1（不足再补）”。
+- 更新 `plan/task_plan.md`：重写 goal/phases，聚焦导出候选池的星级均衡策略与可回溯 meta 记录。
+- 实现：
+  - `scripts/abs_article_impl.py`：导出候选池前按允许星级集合做“配额均衡采样”，并写入 `meta.rating_rebalance`（包含 allowed/available/selected/ideal/target 等）。
+  - `scripts/abs_journal.py` / `scripts/abs_ai_review.py`：`--auto_ai` 多候选池模式下默认允许跨 bucket 重复（通过 `ai_output.json.meta.allow_overlap=true` 跳过 overlap 校验），避免在候选池被均衡采样缩小后 `--auto_ai` 无法凑满 TopK。
+- 自测：
+  - `python3 scripts/test_hybrid_flow.py`
+  - `python3 scripts/test_recommendation_gating.py`
 <!-- 
   WHAT: Your session log - a chronological record of what you did, when, and what happened.
   WHY: Answers "What have I done?" in the 5-Question Reboot Test. Helps you resume after breaks.

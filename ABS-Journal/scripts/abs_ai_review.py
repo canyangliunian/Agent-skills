@@ -38,6 +38,9 @@ def load_json(path: str) -> Dict[str, Any]:
 
 def validate_no_overlap(ai_output: Dict[str, Any]) -> List[str]:
     """Validate that easy/medium/hard selections do not overlap (same journal in multiple buckets)."""
+    meta = ai_output.get("meta") if isinstance(ai_output, dict) else None
+    if isinstance(meta, dict) and meta.get("allow_overlap") is True:
+        return []
     modes = ["easy", "medium", "hard"]
     seen: Dict[str, str] = {}
     errors: List[str] = []

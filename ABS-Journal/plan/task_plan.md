@@ -6,19 +6,20 @@
 -->
 
 ## Goal
-- 将最终推荐报告的呈现方式改为：`序号 | 期刊名 | ABS星级 | Field`（用于 hybrid_report.md 等最终输出）。
-- 要求：不改变推荐/候选池/校验逻辑，仅调整最终报告的固定列与顺序。
+- 修复候选池 JSON 的星级分布：在 `easy/medium/hard` 各自允许的星级集合内，尽量实现 **1:1**（数量尽量均衡）；不够再按“同桶内相邻星级优先”补齐。
+- 作用范围：仅影响 `--export_candidate_pool_json` 导出的候选池内容与其 `meta`；不改变 stdout 的推荐表输出与 CLI 参数语义。
 
 ## Non-goals
-- 不联网更新 AJG 数据、不改评分/筛选/候选池/子集校验逻辑。
-- 不改命令行参数语义（仅必要时新增/调整报告列说明）。
+- 不联网更新 AJG 数据。
+- 不改变评分函数、主题贴合 gating 策略的定义（仍按现有逻辑得到候选序列）。
+- 不把“均衡”责任丢给 AI 提示词（提示词/文档可补充说明，但不作为主要约束手段）。
 
 ## Current Phase
 <!-- 
   WHAT: Which phase you're currently working on (e.g., "Phase 1", "Phase 3").
   WHY: Quick reference for where you are in the task. Update this as you progress.
 -->
-Phase 2（修复混合流程三候选池贯通）
+Phase 4（更新说明与收尾）
 
 ## Phases
 <!-- 
@@ -27,13 +28,13 @@ Phase 2（修复混合流程三候选池贯通）
   WHEN: Update status after completing each phase: pending → in_progress → complete
 -->
 
-### Phase 1: Requirements & Discovery（定位报告生成逻辑）
+### Phase 1: Requirements & Discovery（定位候选池导出逻辑）
 <!-- 
   WHAT: Understand what needs to be done and gather initial information.
   WHY: Starting without understanding leads to wasted effort. This phase prevents that.
 -->
-- [ ] 确认最终报告由哪个脚本生成（`scripts/hybrid_report.py`）
-- [ ] 确认当前报告列顺序与字段映射来源（期刊名/星级/Field）
+- [x] 定位候选池导出逻辑（`scripts/abs_article_impl.py` / `scripts/abs_journal.py`）
+- [x] 明确“1:1”的落点与补齐规则（候选池内均衡；同桶相邻星级补齐）
 - **Status:** complete
 <!-- 
   STATUS VALUES:
@@ -42,13 +43,14 @@ Phase 2（修复混合流程三候选池贯通）
   - complete: Finished this phase
 -->
 
-### Phase 2: Implementation（修改报告固定列）
+### Phase 2: Implementation（实现候选池星级均衡）
 <!-- 
   WHAT: Decide how you'll approach the problem and what structure you'll use.
   WHY: Good planning prevents rework. Document decisions so you remember why you chose them.
 -->
-- [x] 修复混合流程：AI 二次筛选/子集校验/报告生成必须基于 Step1 生成的 easy/medium/hard 三候选池
-- [x] 保持对“单候选池”输入的兼容（历史用法不破坏）
+- [x] 在候选池导出前加入“按星级配额均衡采样”函数（尽量 1:1）
+- [x] 写入候选池 `meta.rating_rebalance`（记录可用/选择/是否补齐/是否总量不足）
+- [x] 保持现有 `--rating_filter` 语义：显式传入仍覆盖默认星级集合
 - **Status:** complete
 
 ### Phase 3: Testing & Verification（最小自测）
@@ -56,8 +58,9 @@ Phase 2（修复混合流程三候选池贯通）
   WHAT: Actually build/create/write the solution.
   WHY: This is where the work happens. Break into smaller sub-tasks if needed.
 -->
-- [x] 运行一次 `--hybrid --auto_ai --ai_report_md ...` 生成报告（TopK=2 即可）
-- [x] 检查 `reports/ai_report.md` 三段的 `ABS星级/Field` 是否均能填充
+- [x] 运行一次 `--hybrid --auto_ai ...` 生成三段候选池 JSON
+- [x] 统计各候选池内允许星级分布，验证差值 <= 1（在总量足够时）
+- [x] 覆盖不足场景：记录 `meta.rating_rebalance` 的补齐与不足标记正确
 - **Status:** complete
 
 ### Phase 4: Delivery（更新说明）
@@ -65,9 +68,8 @@ Phase 2（修复混合流程三候选池贯通）
   WHAT: Verify everything works and meets requirements.
   WHY: Catching issues early saves time. Document test results in progress.md.
 -->
-- [ ] 更新 `references/abs_journal_recommend.md`（如有列说明）
-- [ ] 更新 `assets/recommendation_example.md`（如有固定列示例）
-- **Status:** pending
+- [x] 更新 `references/abs_journal_recommend.md`（说明候选池会尽量均衡星级，并在 meta 记录）
+- **Status:** complete
 
 <!-- Phase 5 removed: merged into Phase 4 -->
 
@@ -120,10 +122,4 @@ Phase 2（修复混合流程三候选池贯通）
 - Log ALL errors - they help avoid repetition
 
 
-### Phase 3: 修正文档/参考（easy/medium/hard 星级分层一致性）
-- [ ] RED：复现“文档照抄导致三段星级过滤一致”的失败样例（来自 tests/abs_journal_reports/ai_report.md）。
-- [ ] GREEN：更新 `SKILL.md` 与 `references/abs_journal_recommend.md`：
-  - 强调 `--rating_filter` 显式传入会覆盖默认分层
-  - Quick Start 示例改为留空（不传）或按三段分别不同桶
-- [ ] REFACTOR：补充快速自检清单：报告 meta 中 Easy/Medium/Hard 的 `rating_filter` 应分别为 `1,2` / `2,3` / `4,4*`。
-- [ ] 验证：跑一次 `python3 scripts/abs_journal.py recommend --hybrid ... --auto_ai`，检查生成 report 的三段 meta 分层一致。
+<!-- 旧任务已归档：此前关于“报告固定列”的计划不再适用本次目标 -->
