@@ -148,26 +148,22 @@ def domain_preference_bonus(paper: PaperProfile, journal: JournalRow) -> float:
     这是在“主题贴合候选集”前置筛选之后的轻量排序偏好，用于把更应用的期刊
     往前推一点，避免方法刊在高难度/中难度下过于靠前。
     """
-
     _ = paper
     jt = normalize_text(journal.title)
+
+    # Define preference rules: (bonus, list of keywords)
+    rules = [
+        (0.4, ["trade", "tariff", "policy", "political economy", "public policy", "public"]),
+        (0.4, ["agric", "farm", "food"]),
+        (0.3, ["regional", "development", "urban", "spatial"]),
+        # Keep finance bonus small to avoid dominating non-finance papers
+        (0.2, ["finance", "bank", "credit", "microfinance", "money"]),
+    ]
+
     bonus = 0.0
-
-    # Trade / policy / political economy
-    if any(k in jt for k in ["trade", "tariff", "policy", "political economy", "public policy", "public"]):
-        bonus += 0.4
-
-    # Agriculture / food
-    if any(k in jt for k in ["agric", "farm", "food"]):
-        bonus += 0.4
-
-    # Regional / development / urban / spatial
-    if any(k in jt for k in ["regional", "development", "urban", "spatial"]):
-        bonus += 0.3
-
-    # Finance / banking / credit (keep small to avoid dominating non-finance papers)
-    if any(k in jt for k in ["finance", "bank", "credit", "microfinance", "money"]):
-        bonus += 0.2
+    for points, keywords in rules:
+        if any(k in jt for k in keywords):
+            bonus += points
 
     return bonus
 
@@ -225,35 +221,34 @@ def fit_score(paper: PaperProfile, journal: JournalRow) -> float:
     当前版本直接复用 keyword_score 的逻辑作为 V1 实现，后续可在不破坏
     gating/排序框架的前提下迭代（例如外置词表、引入短语优先等）。
     """
-
     base = keyword_score(paper, journal)
+
     # Align with prior behavior: ECON/IB&AREA/PUB SEC 等领域在 keyword_score 中会有 +0.5 先验。
     # topic-fit gating 的初版实现需要把这部分包含进 fit_score，否则会出现“表格 fit 分与 gating 打分不一致”的混乱。
     field_bonus = 0.5 if journal.field in {"ECON", "IB&AREA", "PUB SEC"} else 0.0
+
     # Journal-side proxies SHOULD NOT dominate: only apply when the paper itself
     # clearly indicates a related topic (to avoid pushing agri/trade journals for microcredit/min-wage, etc.).
     paper_text = normalize_text(paper.title + " " + paper.abstract)
-    apply_agri = any(k in paper_text for k in ["agricultur", "agriculture", "food", "farm"])
-    apply_trade = any(k in paper_text for k in ["trade", "tariff"])
-    apply_policy_public = any(k in paper_text for k in ["policy", "public opinion", "attitudes", "beliefs"])
-    apply_dev = any(k in paper_text for k in ["development", "tfp", "productivity", "cluster", "spatial"])
-    apply_labor = any(k in paper_text for k in ["wage", "minimum wage", "inequality", "gini", "labor", "employment"])
-    apply_finance = any(k in paper_text for k in ["microcredit", "credit", "loan", "bank", "interest rate", "apr"])
+    jt = normalize_text(journal.title)
+
+    # Rules: (paper_keywords, journal_keywords, bonus_score)
+    rules = [
+        (["agricultur", "agriculture", "food", "farm"], ["agric", "farm", "food"], 0.8),
+        (["trade", "tariff"], ["trade", "tariff"], 0.7),
+        (["policy", "public opinion", "attitudes", "beliefs"], ["policy", "public", "opinion"], 0.5),
+        (["development", "tfp", "productivity", "cluster", "spatial"], ["development"], 0.3),
+        (["wage", "minimum wage", "inequality", "gini", "labor", "employment"],
+         ["labor", "employment", "inequality", "wage"], 0.4),
+        (["microcredit", "credit", "loan", "bank", "interest rate", "apr"],
+         ["finance", "credit", "bank"], 0.4),
+    ]
 
     journal_bonus = 0.0
-    jt = normalize_text(journal.title)
-    if apply_agri and ("agric" in jt or "farm" in jt or "food" in jt):
-        journal_bonus += 0.8
-    if apply_trade and ("trade" in jt or "tariff" in jt):
-        journal_bonus += 0.7
-    if apply_policy_public and ("policy" in jt or "public" in jt or "opinion" in jt):
-        journal_bonus += 0.5
-    if apply_dev and "development" in jt:
-        journal_bonus += 0.3
-    if apply_labor and ("labor" in jt or "employment" in jt or "inequality" in jt or "wage" in jt):
-        journal_bonus += 0.4
-    if apply_finance and ("finance" in jt or "credit" in jt or "bank" in jt):
-        journal_bonus += 0.4
+    for p_keys, j_keys, bonus in rules:
+        apply_rule = any(k in paper_text for k in p_keys)
+        if apply_rule and any(k in jt for k in j_keys):
+            journal_bonus += bonus
 
     return base + field_bonus + journal_bonus
 
@@ -1252,19 +1247,22 @@ def main() -> int:
 
     scored = filtered
 
+    # Determine effective rating filter (used for export and balance)
+    effective_rating_str = ",".join(sorted(allowed)) if allowed else ""
+
     # For exact balance mode, we need to generate a balanced pool first,
     # then select TopK from the balanced pool for the report.
     if getattr(args, "exact_rating_balance", False) or args.export_candidate_pool_json:
-        effective = ",".join(sorted(allowed)) if allowed else ""
-        allowed_ordered = _normalize_allowed_ratings(effective or rating_filter, mode=args.mode)
-        # For exported candidate pools, prefer 1:1 as much as possible (ideal size = k * min(available)),
-        # but ensure pool is large enough for downstream TopK selection.
-        # We use a two-pass: first compute availability by rating, then choose a target size.
+        allowed_ordered = _normalize_allowed_ratings(effective_rating_str or rating_filter, mode=args.mode)
+
+        # Calculate available counts
         avail_tmp: Dict[str, int] = {}
         for j, _s in scored:
             r = (j.ajg_2024 or "").strip()
             if r in set(allowed_ordered):
                 avail_tmp[r] = int(avail_tmp.get(r, 0)) + 1
+
+        # Estimate pool size
         pool_min = int(args.topk) * 10
         pool_max = min(len(scored), max(int(args.topk) * 30, 150))
         pool_size = _estimate_balanced_pool_size(
@@ -1275,6 +1273,8 @@ def main() -> int:
             exact_balance=getattr(args, "exact_rating_balance", False),
             target_topk=args.topk,
         )
+
+        # Create balanced pool
         scored_for_pool, rebalance_meta = rebalance_by_rating_quota(
             scored,
             allowed_ratings=allowed_ordered,
@@ -1282,7 +1282,6 @@ def main() -> int:
             mode=args.mode,
             exact_balance=getattr(args, "exact_rating_balance", False),
         )
-
 
         # For exact balance mode, use the balanced pool for the report
         report_scored = scored_for_pool if getattr(args, "exact_rating_balance", False) else scored
@@ -1293,10 +1292,7 @@ def main() -> int:
 
     # For exact balance mode, apply exact 1:1 balance to TopK as well
     if getattr(args, "exact_rating_balance", False):
-        # Get allowed ratings for current mode
-        effective = ",".join(sorted(allowed)) if allowed else ""
-        allowed_ordered = _normalize_allowed_ratings(effective or rating_filter, mode=args.mode)
-        # Apply exact balance to report_scored for TopK output
+        allowed_ordered = _normalize_allowed_ratings(effective_rating_str or rating_filter, mode=args.mode)
         report_scored, topk_rebalance_meta = rebalance_by_rating_quota(
             report_scored,
             allowed_ratings=allowed_ordered,
@@ -1316,7 +1312,7 @@ def main() -> int:
             mode=args.mode,
             gating_meta=gmeta,
             rating_filter=args.rating_filter,
-            rating_filter_effective=effective if 'effective' in locals() else '',
+            rating_filter_effective=effective_rating_str,
             field_scope_requested=requested_scope_raw,
             field_scope_effective=field_scope_effective,
         )

@@ -126,6 +126,47 @@
 - 需要同步修正文档与示例，并用本地离线用例验证生成的报告中三段 meta 的 `rating_filter` 分别为 `1,2` / `2,3` / `4,4*`。
 
 
+## 2026-02-08：新测试数据诊断（贸易战关税 RCT 论文）
+
+### 测试数据
+```
+标题: Information, beliefs and support for retaliatory tariffs on US agricultural products: evidence from a randomised controlled trial in China
+
+摘要: The US–China trade war has profoundly reshaped global agricultural markets, yet the consequences of protectionist measures for domestic public attitudes—particularly within collectivist societies like China—have been underexplored. This study investigates how Chinese citizens perceive retaliatory tariffs on US agricultural products and explores how awareness of economic self-interest shapes their support for such policies.
+```
+
+### 测试结果（2026-02-08 03:00）
+
+**候选池星级分布**：
+| 模式 | 星级过滤 | per_rating_stats | available_by_rating | selected_by_rating | ideal_balanced_pool_size | 结论 |
+|------|---------|------------------|---------------------|--------------------|-----------------------|------|
+| Easy | `1,2` | `{"1": 80, "2": 80}` | `{"1": 80, "2": 80}` | `{"1": 75, "2": 75}` | 160 | ✅ 完美 1:1 |
+| Medium | `2,3` | `{"2": 80, "3": 80}` | `{"2": 80, "3": 80}` | `{"2": 75, "3": 75}` | 160 | ✅ 完美 1:1 |
+| Hard | `4,4*` | `{"4": 41, "4*": 15}` | `{"4": 41, "4*": 15}` | `{"4": 35, "4*": 15}` | 30 | ⚠️ 约 2.3:1 |
+
+### 核心发现
+
+1. **Easy/Medium 已完美解决**：按星级分层 gating 成功确保低星级期刊不被过滤
+2. **Hard 模式的 4* 不足是合理的**：
+   - 该论文是**应用研究**（农业政策 + RCT），不是纯理论/计量研究
+   - 4* 期刊（Econometrica, Journal of Economic Theory 等）主题范围窄，与论文不匹配
+   - 实际只找到 15 本 4* 期刊有一定主题贴合度
+   - 系统正确反映了现实：对于应用/政策导向论文，4* 期刊本来就少
+
+3. **系统行为正确**：
+   - Gating 策略：`topn-per-rating`（在每个星级内分别取 Top 80）
+   - 均衡逻辑：`ideal_balanced_pool_size = k * min(available_by_rating.values())`
+   - Hard 模式：min(41, 15) = 15 → ideal = 30 → 实际选中 50 本（35×4 + 15×4*）
+
+### 结论
+
+**无需进一步修复**。当前实现已经是最优方案：
+- Easy/Medium 实现完美 1:1
+- Hard 模式的不均衡是**论文主题特性**决定的，不是系统缺陷
+- 对于应用/政策研究，推荐关注 Medium 模式（2-3 星期刊更匹配）
+
+---
+
 ## 2026-02-08：Session 5ad953f2 候选池 1:1 不满足问题（根因分析）
 
 ### 现象

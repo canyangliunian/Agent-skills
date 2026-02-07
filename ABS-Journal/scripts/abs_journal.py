@@ -113,73 +113,93 @@ def _select_topk_from_pools(export_json_list: List[str], *, topk: int) -> dict:
         mode = (meta.get("mode") or "").strip() or "unknown"
         by_mode[mode] = pool
 
-    def pick_from(pool: dict) -> List[dict]:
-        candidates = (pool or {}).get("candidates") or []
-
-        def key(c: dict):
-            s = (c or {}).get("signals") or {}
-            return (float(s.get("total_score") or 0.0), float(s.get("fit_score") or 0.0))
-
-        ranked = sorted(candidates, key=key, reverse=True)
-        picked = []
-        for c in ranked[:topk]:
-            picked.append(
-                {
-                    "journal": c.get("journal", ""),
-                    "ajg_2024": c.get("ajg_2024", ""),
-                    "topic": "根据候选池打分（主题贴合/可投稿性/价值权重等）自动筛选",
-                }
-            )
-        return picked
-
-    # Ensure non-overlap across easy/medium/hard.
-    #
-    # Note: candidate pools can be intentionally rebalanced to be near 1:1 by rating,
-    # which might shrink pool sizes (e.g., medium could be ~10). In that case, strict
-    # cross-bucket uniqueness can make --auto_ai fail unnecessarily. We therefore apply
-    # uniqueness as best-effort: avoid overlap when possible, but allow overlap as a
-    # fallback to guarantee TopK.
-    picked_names = set()
+    # Track picked journal names across modes to enforce uniqueness
+    picked_names: set = set()
 
     def pick_unique(mode: str) -> List[dict]:
         pool = by_mode.get(mode) or pools[0]
         candidates = (pool or {}).get("candidates") or []
+        meta = (pool or {}).get("meta") or {}
+
+        # Get rating filter from pool meta to implement 1:1 rating balance
+        rating_filter = meta.get("rating_filter_effective", "")
+        allowed_ratings = [r.strip() for r in rating_filter.split(",") if r.strip()] if rating_filter else []
 
         def key(c: dict):
             s = (c or {}).get("signals") or {}
             return (float(s.get("total_score") or 0.0), float(s.get("fit_score") or 0.0))
 
-        ranked = sorted(candidates, key=key, reverse=True)
-        out: List[dict] = []
-        for c in ranked:
-            name = (c.get("journal") or "").strip()
-            if not name or name in picked_names:
+        # Group candidates by rating
+        by_rating = {}
+        for c in candidates:
+            rating = (c.get("ajg_2024") or "").strip()
+            if not rating or (allowed_ratings and rating not in allowed_ratings):
                 continue
-            out.append(
-                {
-                    "journal": name,
-                    "ajg_2024": c.get("ajg_2024", ""),
-                    "topic": "根据候选池打分（主题贴合/可投稿性/价值权重等）自动筛选",
-                }
-            )
-            picked_names.add(name)
-            if len(out) >= topk:
-                break
-        if len(out) < topk:
-            # Fallback: allow overlap if needed to complete TopK.
-            for c in ranked:
-                name = (c.get("journal") or "").strip()
-                if not name:
-                    continue
-                out.append(
-                    {
+            if rating not in by_rating:
+                by_rating[rating] = []
+            by_rating[rating].append(c)
+
+        # Sort each rating group by score
+        for rating in by_rating:
+            by_rating[rating].sort(key=key, reverse=True)
+
+        # Implement 1:1 balanced sampling: pick evenly from each rating
+        out: List[dict] = []
+        if allowed_ratings and len(allowed_ratings) > 1:
+            # Calculate per-rating quota for 1:1 balance
+            per_rating_quota = topk // len(allowed_ratings)
+            remainder = topk % len(allowed_ratings)
+
+            # Pick from each rating group
+            for idx, rating in enumerate(allowed_ratings):
+                quota = per_rating_quota + (1 if idx < remainder else 0)
+                rating_list = by_rating.get(rating, [])
+
+                for c in rating_list:
+                    if len([x for x in out if (x.get("ajg_2024") or "").strip() == rating]) >= quota:
+                        break
+
+                    name = (c.get("journal") or "").strip()
+                    if not name or name in picked_names:
+                        continue
+
+                    out.append({
                         "journal": name,
                         "ajg_2024": c.get("ajg_2024", ""),
                         "topic": "根据候选池打分（主题贴合/可投稿性/价值权重等）自动筛选",
-                    }
-                )
+                    })
+                    picked_names.add(name)
+        else:
+            # Fallback: no rating filter or single rating, use simple ranking
+            ranked = sorted(candidates, key=key, reverse=True)
+            for c in ranked:
+                name = (c.get("journal") or "").strip()
+                if not name or name in picked_names:
+                    continue
+                out.append({
+                    "journal": name,
+                    "ajg_2024": c.get("ajg_2024", ""),
+                    "topic": "根据候选池打分（主题贴合/可投稿性/价值权重等）自动筛选",
+                })
+                picked_names.add(name)
                 if len(out) >= topk:
                     break
+
+        # Pass 2: Fill remaining slots if needed (allow overlap)
+        if len(out) < topk:
+            all_ranked = sorted(candidates, key=key, reverse=True)
+            for c in all_ranked:
+                name = (c.get("journal") or "").strip()
+                if not name or any(x["journal"] == name for x in out):
+                    continue
+                out.append({
+                    "journal": name,
+                    "ajg_2024": c.get("ajg_2024", ""),
+                    "topic": "根据候选池打分（主题贴合/可投稿性/价值权重等）自动筛选",
+                })
+                if len(out) >= topk:
+                    break
+
         if len(out) < topk:
             raise RuntimeError(f"--auto_ai 生成失败：{mode} 仅选到 {len(out)}/{topk}（候选池不足）")
         return out
@@ -326,6 +346,10 @@ def main() -> int:
             export_json_list = [f"{base}_{m}{ext or '.json'}" for m in selected_modes]
         else:
             export_json_list = [export_json] if export_json else [""]
+
+        # Auto-enable exact_rating_balance for hybrid mode to ensure 1:1 rating distribution in recommendations
+        if args.hybrid and not args.exact_rating_balance:
+            args.exact_rating_balance = True
 
         for m, out_json in zip(selected_modes, export_json_list):
             rating_filter = (args.rating_filter or "").strip()
