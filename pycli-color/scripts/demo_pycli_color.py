@@ -16,8 +16,8 @@ demo_pycli_color.py
 - 若 FORCE_COLOR=1：强制启用（即便非 TTY）
 
 测试（请保留这些注释，便于未来快速验证）：
-# NO_COLOR=1 python3 /Users/lingguiwang/.agents/skills/pycli-color/scripts/demo_pycli_color.py -h
-# FORCE_COLOR=1 python3 /Users/lingguiwang/.agents/skills/pycli-color/scripts/demo_pycli_color.py -h
+# NO_COLOR=1 python3 scripts/demo_pycli_color.py -h
+# FORCE_COLOR=1 python3 scripts/demo_pycli_color.py -h
 """
 
 from __future__ import annotations

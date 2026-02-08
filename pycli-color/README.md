@@ -6,7 +6,7 @@
 - metavar/占位符（全大写或包含 `_`，如 `TITLE`, `AJG_CSV`）：黄色 + 加粗
 - 支持 `NO_COLOR` / `FORCE_COLOR=1` 的可控启停策略
 
-核心规则见：`/Users/lingguiwang/.agents/skills/pycli-color/SKILL.md`
+核心规则见：`./SKILL.md`
 
 ## 快速验证
 
@@ -15,13 +15,13 @@
 强制输出彩色（推荐验证命令）：
 
 ```bash
-NO_COLOR= FORCE_COLOR=1 python3 /Users/lingguiwang/.agents/skills/pycli-color/scripts/demo_pycli_color.py -h
+NO_COLOR= FORCE_COLOR=1 python3 ./scripts/demo_pycli_color.py -h
 ```
 
 强制无色：
 
 ```bash
-NO_COLOR=1 python3 /Users/lingguiwang/.agents/skills/pycli-color/scripts/demo_pycli_color.py -h
+NO_COLOR=1 python3 ./scripts/demo_pycli_color.py -h
 ```
 
 ## 在新脚本中复用

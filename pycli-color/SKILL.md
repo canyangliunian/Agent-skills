@@ -64,9 +64,9 @@ description: 为 Python argparse CLI 提供统一的彩色 -h/--help 输出规�
 
 ## 推荐实现（可直接复制）
 
-你可以直接参考项目内模板（绝对路径）：
+你可以直接参考项目内模板（相对路径）：
 
-- `/Users/lingguiwang/.agents/skills/pycli-color/scripts/demo_pycli_color.py`
+- `./scripts/demo_pycli_color.py`
 
 ## 给未来助手的“可复制提示词”
 
@@ -87,6 +87,6 @@ description: 为 Python argparse CLI 提供统一的彩色 -h/--help 输出规�
 6) 代码里必须保留测试注释：
    - NO_COLOR=1 python your_script.py -h
    - FORCE_COLOR=1 python your_script.py -h
-   默认使用绝对路径，并保证脚本可直接运行。
+   默认使用相对路径，并保证脚本可直接运行。
    """
 
