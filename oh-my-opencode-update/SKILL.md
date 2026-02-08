@@ -12,35 +12,58 @@ description: Use when upgrading, reinstalling, or troubleshooting the oh-my-open
 - 先备份，再温和卸载，再清理缓存（删除前二次确认），最后安装并验证。
 - 任何关键步骤失败：**立刻停止**（不自动扩大破坏范围）。
 
-## 适用环境（本机固定路径）
-- `opencode`：`/Users/lingguiwang/.opencode/bin/opencode`
-- 依赖目录（oh-my-opencode 安装在这里）：`/Users/lingguiwang/.config/opencode`
-- 配置文件：
-  - `/Users/lingguiwang/.config/opencode/opencode.json`
-  - `/Users/lingguiwang/.config/opencode/oh-my-opencode.json`
-- 缓存目录（可选清理）：`/Users/lingguiwang/.cache/oh-my-opencode`
+## 适用环境（可通过环境变量自定义）
 
-## 使用方式（脚本入口）
-脚本：`/Users/lingguiwang/Documents/Coding/LLM/Skills/oh-my-opencode-update/scripts/oh_my_opencode_update.sh`
+### 默认路径
+以下路径为默认值，可通过环境变量覆盖：
+
+| 环境变量 | 默认值 | 说明 |
+|---------|--------|------|
+| `OPENCODE_CONFIG_DIR` | `${HOME}/.config/opencode` | opencode 配置目录（oh-my-opencode 安装位置） |
+| `OPENCODE_CACHE_DIR` | `${HOME}/.cache` | 缓存目录根目录 |
+| `OPENCODE_BIN` | `${HOME}/.opencode/bin/opencode` | opencode 二进制文件路径 |
+
+### 配置文件
+- opencode 配置：`${OPENCODE_CONFIG_DIR}/opencode.json`
+- oh-my-opencode 配置：`${OPENCODE_CONFIG_DIR}/oh-my-opencode.json`
+- 缓存目录：`${OPENCODE_CACHE_DIR}/oh-my-opencode`
+
+### 自定义路径（可选）
+```bash
+export OPENCODE_CONFIG_DIR="/custom/config/opencode"
+export OPENCODE_CACHE_DIR="/custom/cache"
+```
+
+更多配置说明请参见 `references/paths_config.md`。
+
+## 使用方式
+
+脚本位置：`${SKILL_ROOT}/scripts/oh_my_opencode_update.sh`
+
+其中 `${SKILL_ROOT}` 为 skill 根目录（包含 SKILL.md 的目录）。
 
 ### 1) Dry-run（推荐先跑）
 ```bash
-bash /Users/lingguiwang/Documents/Coding/LLM/Skills/oh-my-opencode-update/scripts/oh_my_opencode_update.sh --dry-run --latest
+# 从 skill 根目录运行
+bash scripts/oh_my_opencode_update.sh --dry-run --latest
 ```
 
 ### 2) 实际执行：升级到 latest
 ```bash
-bash /Users/lingguiwang/Documents/Coding/LLM/Skills/oh-my-opencode-update/scripts/oh_my_opencode_update.sh --apply --latest
+bash scripts/oh_my_opencode_update.sh --apply --latest
 ```
 
 ### 3) 实际执行：升级到指定版本
 ```bash
-bash /Users/lingguiwang/Documents/Coding/LLM/Skills/oh-my-opencode-update/scripts/oh_my_opencode_update.sh --apply --target-version 3.2.2
+bash scripts/oh_my_opencode_update.sh --apply --target-version 3.2.2
 ```
 
 ## 验收（必须做）
-- `cd /Users/lingguiwang/.config/opencode && node node_modules/.bin/oh-my-opencode --version`
-- `cd /Users/lingguiwang/.config/opencode && node node_modules/.bin/oh-my-opencode doctor`
+```bash
+cd ${OPENCODE_CONFIG_DIR}
+node node_modules/.bin/oh-my-opencode --version
+node node_modules/.bin/oh-my-opencode doctor
+```
 
 ## 常见问题（本机已遇到）
 - `bunx ...` 报 `bun is unable to write files to tempdir: PermissionDenied`

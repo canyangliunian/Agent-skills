@@ -12,10 +12,16 @@ DRY_RUN=0
 # target: "latest" or a semver string
 TARGET="latest"
 
-CONFIG_DIR="/Users/lingguiwang/.config/opencode"
-OPENCODE_JSON="/Users/lingguiwang/.config/opencode/opencode.json"
-OMO_JSON="/Users/lingguiwang/.config/opencode/oh-my-opencode.json"
-OMO_CACHE="/Users/lingguiwang/.cache/oh-my-opencode"
+# 路径配置（优先使用环境变量，否则使用默认值）
+: "${OPENCODE_CONFIG_DIR:=${HOME}/.config/opencode}"
+: "${OPENCODE_CACHE_DIR:=${HOME}/.cache}"
+: "${OPENCODE_BIN:=${HOME}/.opencode/bin/opencode}"
+
+# 核心路径
+CONFIG_DIR="${OPENCODE_CONFIG_DIR}"
+OPENCODE_JSON="${CONFIG_DIR}/opencode.json"
+OMO_JSON="${CONFIG_DIR}/oh-my-opencode.json"
+OMO_CACHE="${OPENCODE_CACHE_DIR}/oh-my-opencode"
 
 usage() {
   cat <<'USAGE'
