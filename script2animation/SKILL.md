@@ -1,6 +1,6 @@
 ---
 name: script2animation
-description: Generate an offline macOS Terminal-style HTML animation (typing, scenes, scene switch + replay/pause) that demonstrates how to use a local script. Use when the user asks to create a terminal animation/tutorial from a script file (.py/.sh/.R/.do), with accurate parameters and outputs derived from the script itself.
+description: Use when the user asks to create a terminal animation or tutorial from a script file (.py/.sh/.R/.do), or needs to demonstrate script usage visually with typing effects and scene transitions.
 ---
 
 # script2animation

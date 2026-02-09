@@ -1,6 +1,6 @@
 ---
 name: abs-journal
-description: Use when user asks to recommend academic journals for paper submission, or needs to update the ABS/AJG journal database. Triggers include "推荐期刊", "投稿建议", "journal recommendation", "ABS评级", "AJG评级", "更新数据库", "update database".
+description: Use when user asks to recommend academic journals for paper submission, update the ABS/AJG journal database, or mentions "推荐期刊", "投稿建议", "journal recommendation", "ABS评级", "AJG评级".
 ---
 
 # abs-journal

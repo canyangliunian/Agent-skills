@@ -1,6 +1,6 @@
 ---
 name: latex
-description: Use when converting a PDF into AEA/经济研究/NAU/SCU LaTeX/Beamer via marker_extract.py + template + compile.py, extracting structured sections from marker outputs, or using those tools individually.
+description: Use when converting a PDF into LaTeX/Beamer for academic templates (AEA, 经济研究, NAU, SCU), extracting structured content from PDFs, or compiling LaTeX documents.
 ---
 
 # LaTeX

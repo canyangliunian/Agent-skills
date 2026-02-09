@@ -1,6 +1,6 @@
 ---
 name: oh-my-opencode-update
-description: Use when upgrading, reinstalling, or troubleshooting the oh-my-opencode plugin for opencode (OpenCode), especially when old caches/lockfiles/permissions cause the new version not to take effect; supports upgrading to latest or a pinned version with backup and verification.
+description: Use when upgrading, reinstalling, or troubleshooting the oh-my-opencode plugin, especially when old caches, lockfiles, or permissions prevent the new version from taking effect.
 ---
 
 # oh-my-opencode-update

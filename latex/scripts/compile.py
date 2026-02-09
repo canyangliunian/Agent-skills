@@ -556,7 +556,7 @@ def _delete_tmpdir(p: Path) -> None:
         return
     if not _should_delete_tmpdir(p):
         return
-    _delete_tmpdir(p)
+    shutil.rmtree(p, ignore_errors=True)
 
 def run_cmd(cmd: list[str], cwd: Path, log_path: Path, append: bool = True, env: Optional[dict[str, str]] = None) -> CmdResult:
     header = f"\n$ {' '.join(cmd)}\n"

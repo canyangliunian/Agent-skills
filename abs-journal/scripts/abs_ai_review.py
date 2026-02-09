@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from typing import Any, Dict, List
 
 
@@ -52,7 +53,7 @@ def validate_no_overlap(ai_output: Dict[str, Any]) -> List[str]:
         for idx, it in enumerate(items, 1):
             if not isinstance(it, dict):
                 continue
-            j = (it.get("journal") or "").strip()
+            j = re.sub(r'\s+', ' ', (it.get("journal") or "").strip())
             if not j:
                 continue
             prev = seen.get(j)

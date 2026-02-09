@@ -1,6 +1,6 @@
 ---
 name: stata-sep
-description: 通过 Stata-MCP 提供的工具和 agent 工作流完成 Stata 分析：安装配置、生成/追加 do 文件、运行 do、读取日志与文件、获取数据描述、查看 help、安装 ado 包、载入图像、创建目录；并包含 agent 模式与评估示例的渐进指引。
+description: Use when performing Stata analysis via Stata-MCP tools, including do file generation, execution, result analysis, or managing ado packages.
 ---
 
 # Stata-sep（基于 Stata-MCP）

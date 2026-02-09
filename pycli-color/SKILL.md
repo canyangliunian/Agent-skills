@@ -1,7 +1,6 @@
 ---
 name: pycli-color
-version: "1.0.0"
-description: 为 Python argparse CLI 提供统一的彩色 -h/--help 输出规范（选项青色加粗、metavar 黄色加粗，支持 NO_COLOR/FORCE_COLOR）。
+description: Use when writing Python argparse CLI scripts that need colorful --help output with customizable color control (NO_COLOR/FORCE_COLOR support).
 ---
 
 # pycli-color
