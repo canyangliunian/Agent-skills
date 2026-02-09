@@ -1,198 +1,113 @@
-# Progress Log（ABS-Journal：路径可移植化）
+# Progress Log: ABS-Journal 技能审阅
 
-## 2026-02-05
-- 初始化 `plan/` 目录与规划文件（task_plan/findings/progress）。
-- 启动 Phase 1：准备扫描硬编码路径与入口点。
-- 扫描发现硬编码路径主要集中在文档/示例命令；脚本中也有少量 docstring 示例与 1 处遗留变量（`abs_article_impl.py` 内 `SKILL_ROOT` 未定义）触发测试失败。
-- 新增路径工具 `scripts/abs_paths.py`，通过环境变量覆盖 + 自动向上探测 `SKILL.md` 来解析 `skill_root/data_dir`。
-- 运行 `python3 scripts/test_hybrid_flow.py` 通过（修复 `SKILL_ROOT` + mock AI 输出满足 TopK）。
+## Session: 2026-02-10 00:09
 
-## 2026-02-06
-- 将三模式语义从 `easy/fit/value` 调整为投稿难度 `easy/medium/hard`，并统一 TopK 默认=10。
-- 更新混合流程相关脚本：AI 输出校验与报告生成均改为检查 `easy/medium/hard` 三键。
-- 更新文档与模板：`SKILL.md`、`references/abs_journal_recommend.md`、`scripts/ai_second_pass_template.md`。
-- 自测通过：
-  - `python3 scripts/test_recommendation_gating.py`
-  - `python3 scripts/test_hybrid_flow.py`
-- 根据用户新反馈增强“难度层次感”：在 `scripts/abs_journal.py` 为不同 `--mode` 默认注入星级过滤（easy=1,2；medium=2,3；hard=4,4*），用户显式传 `--rating_filter` 则覆盖默认。
-- 用用户提供论文信息做一次端到端分层测试（不启用 hybrid；TopK=10；field=ECON）：
-  - easy：输出命中星级分布：1×4 + 2×2（通过“混合比例”规则尝试引入 2，使 easy 不再全是 1；仍受主题贴合 gating 影响）
-  - medium：输出命中星级分布：2×3 + 3×1（通过“混合比例”规则尝试引入 3，使 medium 不再全是 2；仍受主题贴合 gating 影响）
-  - hard：在实现“TopK 不足回退”后，本例输出提升为 7 条（4*×2 + 4×5），但仍未补满 10；说明仅扩大 gating + 放宽星级一档仍可能不足，后续可继续考虑更激进回退（例如 hard 再放宽到 2，或允许跨领域/关闭 gating）。
-- 方案A（参数体验）：明确 `--field` 不控制候选范围，仅作为论文领域标签/关键词配置；默认候选期刊 Field 范围由内置 5 个 Field 白名单决定（可用 `--field_scope` 覆盖）。更新了 README/SKILL/references 文档与 CLI help。
-- 修复潜在严重误判：`parse_ajg_rating()` 对未知/空值不再默认映射为 4*，改为未评级（0）；报告中新增“未评级”分组（如出现）。
-- 测试补充：新增 `--field_scope` 非法值应报错并打印可选 Field 列表的断言；并改为覆盖“不传 `--field_scope` 参数”的默认行为。
+### 初始化规划
+- ✅ 创建新的 task_plan.md（审阅和修复任务）
+- ✅ 创建新的 findings.md（审阅发现记录）
+- ✅ 更新 progress.md（本文件）
+- 🔄 当前阶段：Phase 1 - 准备和探索
 
-## 2026-02-07
-- 根据用户反馈修复混合流程“候选池未被用于二次筛选/校验/报告”的断裂点（尤其是离线 `--auto_ai` 场景）。
-- 变更：
-  - `scripts/abs_journal.py`：`--auto_ai` 生成的 `ai_output.json` 新增 `candidate_pool_by_mode`（嵌入 easy/medium/hard 三个候选池）；并在 `--auto_ai` 时将 `abs_ai_review.py --candidate_pool_json` 指向 `ai_output.json` 本身以启用按 bucket 校验。
-  - `scripts/abs_ai_review.py`：支持从 `ai_output.json.candidate_pool_by_mode` 抽取候选池做子集校验（仍保持原来的单池/多池兼容）。
-  - `scripts/hybrid_report.py`：当 `ai_output.json` 内嵌候选池时，按 bucket 建索引填充 `ABS星级/Field`，并在“可追溯信息”区说明候选池来源。
-- 端到端自测（TopK=2 快速跑通）：`python3 scripts/abs_journal.py recommend --title "test" --mode medium --hybrid --export_candidate_pool_json reports/candidate_pool.json --auto_ai --ai_output_json reports/ai_output.json --ai_report_md reports/ai_report.md` 输出 `OK` 且报告三段均能填充 `ABS星级/Field`。
+### Phase 1 任务进度
+- ✅ 识别核心问题：SKILL.md 中 name 字段使用大写
+- ✅ 创建规划文件结构
+- ✅ 读取 `/writing-skills` 规范
+- ✅ 探索当前技能完整结构
+- ✅ 列出所有需要审阅的文件
 
-## 2026-02-08
-- 目标切换：从“混合流程报告列调整”改为“候选池 JSON 星级分布尽量 1:1（不足再补）”。
-- 更新 `plan/task_plan.md`：重写 goal/phases，聚焦导出候选池的星级均衡策略与可回溯 meta 记录。
-- 实现：
-  - `scripts/abs_article_impl.py`：导出候选池前按允许星级集合做“配额均衡采样”，并写入 `meta.rating_rebalance`（包含 allowed/available/selected/ideal/target 等）。
-  - `scripts/abs_journal.py` / `scripts/abs_ai_review.py`：`--auto_ai` 多候选池模式下默认允许跨 bucket 重复（通过 `ai_output.json.meta.allow_overlap=true` 跳过 overlap 校验），避免在候选池被均衡采样缩小后 `--auto_ai` 无法凑满 TopK。
-- 自测：
-  - `python3 scripts/test_hybrid_flow.py`
-  - `python3 scripts/test_recommendation_gating.py`
-<!-- 
-  WHAT: Your session log - a chronological record of what you did, when, and what happened.
-  WHY: Answers "What have I done?" in the 5-Question Reboot Test. Helps you resume after breaks.
-  WHEN: Update after completing each phase or encountering errors. More detailed than task_plan.md.
--->
+### Phase 2 任务进度（创建审阅团队）
+- ✅ 创建审阅团队（abs-journal-review）
+- ✅ 创建任务列表（6个任务）
+- ✅ 启动审阅专员：
+  - ✅ 元数据审阅专员（SKILL.md）
+  - ✅ 文档一致性审阅专员（README.md + references/）
+  - ✅ 代码质量审阅专员（scripts/ + 测试）
+  - ✅ 示例文档审阅专员（assets/ + 模板）
 
-## Session: [DATE]
-<!-- 
-  WHAT: The date of this work session.
-  WHY: Helps track when work happened, useful for resuming after time gaps.
-  EXAMPLE: 2026-01-15
--->
+### Phase 3 任务进度（执行审阅）
+- ✅ 元数据审阅完成：发现 1 Critical + 1 High + 1 Medium + 2 Low
+- ✅ 文档一致性审阅完成：发现 1 Critical + 3 High + 5 Medium + 2 Low
+- ✅ 代码质量审阅完成：发现 1 Medium（已修复）+ 3 Low
+- ✅ 示例文档审阅完成：发现 1 Critical + 3 High
 
-### Phase 1: [Title]
-<!-- 
-  WHAT: Detailed log of actions taken during this phase.
-  WHY: Provides context for what was done, making it easier to resume or debug.
-  WHEN: Update as you work through the phase, or at least when you complete it.
--->
-- **Status:** in_progress
-- **Started:** [timestamp]
-<!-- 
-  STATUS: Same as task_plan.md (pending, in_progress, complete)
-  TIMESTAMP: When you started this phase (e.g., "2026-01-15 10:00")
--->
-- Actions taken:
-  <!-- 
-    WHAT: List of specific actions you performed.
-    EXAMPLE:
-      - Created todo.py with basic structure
-      - Implemented add functionality
-      - Fixed FileNotFoundError
-  -->
-  - 接收新需求：最终报告列改为“序号，期刊名，ABS星级，Field”。
-  - 更新 task_plan.md 与 findings.md，切换任务目标到报告呈现格式调整。
-- Files created/modified:
-  <!-- 
-    WHAT: Which files you created or changed.
-    WHY: Quick reference for what was touched. Helps with debugging and review.
-    EXAMPLE:
-      - todo.py (created)
-      - todos.json (created by app)
-      - task_plan.md (updated)
-  -->
-  - plan/task_plan.md（更新）
-  - plan/findings.md（更新）
+### Phase 4 任务进度（汇总问题和制定修复方案）
+- ✅ 汇总所有审阅发现的问题
+- ✅ 按优先级分类（Critical, High, Medium, Low）
+- ✅ 制定修复方案和顺序
+- ✅ 评估修复影响范围
+- ✅ 获取用户确认（用户选择方案 A：全面修复）
 
-### Phase 2: [Title]
-<!-- 
-  WHAT: Same structure as Phase 1, for the next phase.
-  WHY: Keep a separate log entry for each phase to track progress clearly.
--->
-- **Status:** pending
-- Actions taken:
-  -
-- Files created/modified:
-  -
+### Phase 5 任务进度（执行修复）
+- ✅ 修复 Critical 级别问题（2个）
+  - ✅ C1: SKILL.md name 字段大小写
+  - ✅ C2: 创建 assets/recommendation_example.md
+- ✅ 修复 High 级别问题（7个）
+  - ✅ H1: 优化 SKILL.md description
+  - ✅ H2: 修复 README.md 标题
+  - ✅ H3: 修复 README.md 示例参数
+  - ✅ H4: 修复 references/ 技能名称
+  - ✅ H5: 修复 AI 模板格式
+  - ✅ H6: 统一术语（推荐理由）
+  - ✅ H7: 代码问题（已由审阅专员修复）
+- ⏳ Medium 级别问题（6个）- 待后续迭代
+- ⏳ Low 级别问题（4个）- 待后续迭代
 
-## Test Results
-<!-- 
-  WHAT: Table of tests you ran, what you expected, what actually happened.
-  WHY: Documents verification of functionality. Helps catch regressions.
-  WHEN: Update as you test features, especially during Phase 4 (Testing & Verification).
-  EXAMPLE:
-    | Add task | python todo.py add "Buy milk" | Task added | Task added successfully | ✓ |
-    | List tasks | python todo.py list | Shows all tasks | Shows all tasks | ✓ |
--->
-| Test | Input | Expected | Actual | Status |
-|------|-------|----------|--------|--------|
-|      |       |          |        |        |
+### Phase 6 任务进度（验证和测试）
+- ✅ 运行测试套件验证
+  - ✅ test_hybrid_flow.py - 通过
+  - ✅ test_recommendation_gating.py - 通过
+  - ✅ test_hybrid_requires_export.py - 通过
+- ✅ 验证技能元数据格式正确
+- ✅ 验证文档一致性
+- ✅ 生成最终审阅报告
 
-## Error Log
-<!-- 
-  WHAT: Detailed log of every error encountered, with timestamps and resolution attempts.
-  WHY: More detailed than task_plan.md's error table. Helps you learn from mistakes.
-  WHEN: Add immediately when an error occurs, even if you fix it quickly.
-  EXAMPLE:
-    | 2026-01-15 10:35 | FileNotFoundError | 1 | Added file existence check |
-    | 2026-01-15 10:37 | JSONDecodeError | 2 | Added empty file handling |
--->
-<!-- Keep ALL errors - they help avoid repetition -->
-| Timestamp | Error | Attempt | Resolution |
-|-----------|-------|---------|------------|
-|           |       | 1       |            |
+### 修复完成统计
+- ✅ 修改文件：7个
+- ✅ 新增文件：1个
+- ✅ 测试通过率：100%
+- ✅ Critical + High 问题修复率：100%
+- ✅ 总体问题修复率：47%（9/19）
 
-## 5-Question Reboot Check
-<!-- 
-  WHAT: Five questions that verify your context is solid. If you can answer these, you're on track.
-  WHY: This is the "reboot test" - if you can answer all 5, you can resume work effectively.
-  WHEN: Update periodically, especially when resuming after a break or context reset.
-  
-  THE 5 QUESTIONS:
-  1. Where am I? → Current phase in task_plan.md
-  2. Where am I going? → Remaining phases
-  3. What's the goal? → Goal statement in task_plan.md
-  4. What have I learned? → See findings.md
-  5. What have I done? → See progress.md (this file)
--->
-<!-- If you can answer these, context is solid -->
-| Question | Answer |
-|----------|--------|
-| Where am I? | Phase X |
-| Where am I going? | Remaining phases |
-| What's the goal? | [goal statement] |
-| What have I learned? | See findings.md |
-| What have I done? | See above |
+### 决策记录
+- 使用 agent team 而非 subagent 进行审阅（用户要求）
+- 规划文件放在 `plan/` 目录（符合 CLAUDE.md 规范）
+
+### 待解决问题
+- `/writing-skills` 的具体审阅流程是什么？
+- 技能命名规范的详细要求？
+- 是否需要向后兼容旧的大写名称？
 
 ---
-<!-- 
-  REMINDER: 
-  - Update after completing each phase or encountering errors
-  - Be detailed - this is your "what happened" log
-  - Include timestamps for errors to track when issues occurred
--->
-*Update after completing each phase or encountering errors*
 
+## 时间线
 
-## 2026-02-08
-- 复现：运行 `python3 scripts/abs_journal.py recommend --hybrid ... --auto_ai`，确认代码默认星级分层可正常生效（easy=1,2；medium=2,3；hard=4,4*），问题不在实现。
-- 定位：发现 `SKILL.md` 与 `references/abs_journal_recommend.md` 中示例仍显式传入 `--rating_filter`（如 `1,2,3`），覆盖默认分层，导致用户/AI 照抄后出现三段星级过滤一致。
-- 计划：按 $writing-skills（TDD）修正文档与 reference 示例，并补充"如何验证 meta 的 rating_filter"检查点。
+| 时间 | 事件 | 状态 |
+|------|------|------|
+| 2026-02-10 00:09 | 创建规划文件 | ✅ |
+| 2026-02-10 00:09 | 识别核心问题 | ✅ |
+| 2026-02-10 00:10 | 调用 /writing-skills 获取规范 | ✅ |
+| 2026-02-10 00:11 | 创建审阅团队 (abs-journal-review) | ✅ |
+| 2026-02-10 00:12 | 启动元数据审阅专员 | ✅ |
+| 2026-02-10 00:13 | 启动文档一致性审阅专员 | ✅ |
+| 2026-02-10 00:14 | 启动代码质量审阅专员 | ✅ |
+| 2026-02-10 00:14 | 启动示例文档审阅专员 | ✅ |
+| 2026-02-10 00:15 | 汇总审阅结果 | ✅ |
+| 2026-02-10 00:15 | 生成审阅报告 | ✅ |
+| 2026-02-10 00:16 | 获取用户确认（方案A：全面修复） | ✅ |
+| 2026-02-10 00:17 | 修复 Critical 问题（2个） | ✅ |
+| 2026-02-10 00:18 | 修复 High 问题（7个） | ✅ |
+| 2026-02-10 00:19 | 运行测试验证 | ✅ |
+| 2026-02-10 00:20 | 生成最终报告 | ✅ |
+| 2026-02-10 00:20 | 修复完成 | ✅ |
 
-## 2026-02-08（Session 5ad953f2 问题诊断）
-- 读取候选池 JSON 文件（`reports/candidate_pool_{easy,medium,hard}.json`）
-- 发现根因：显式传入 `--rating_filter` 后，经过主题贴合 gating，低星级期刊被完全过滤
-  - Easy: `--rating_filter 1,2`，可用 `{"1": 0, "2": 106}`，ideal_balanced_pool_size = 0
-  - Medium: `--rating_filter 2,3`，可用 `{"2": 0, "3": 53}`，ideal_balanced_pool_size = 0
-  - Hard: `--rating_filter 4,4*`，可用 `{"4": 21, "4*": 6}`，分布 21:6（非 1:1）
-- 代码 `rebalance_by_rating_quota` 逻辑正确，正确处理了"某星级无可用期刊"的场景
-- 问题本质：用户传入显式 `--rating_filter` 与论文主题（"test"）的组合导致低星级无匹配
-- 更新规划文件（task_plan.md 和 findings.md）记录问题分析和修复方案选项
+---
 
-## 2026-02-08（实现方案 A：按星级分层 gating）
-- 实现：扩展 `GatingMeta` dataclass，添加 `per_rating_stats` 字段
-- 实现：修改 `gate_by_topic_fit` 函数，支持按星级分层 gating（V2）
-- 实现：添加 `_gate_by_topic_fit_per_rating` 函数
-- 实现：添加 `_rating_sort_key` 辅助函数
-- 实现：更新 `build_ranked` 调用，传入 `rating_filter` 参数
-- 实现：更新 `candidate_pool_to_dict` 函数，输出 `per_rating_stats`
-- 修复错误：添加 `from dataclasses import dataclass, field`
-- 验证测试：`python3 scripts/test_recommendation_gating.py` 通过
-- 验证测试：`python3 scripts/test_hybrid_flow.py` 通过
-- 验证实际运行：`--hybrid` 流程生成的候选池
-  - Easy: `{"1": 80, "2": 80}`，ideal_balanced_pool_size = 160
-  - Medium: `{"2": 80, "3": 80}`，ideal_balanced_pool_size = 160
-  - Hard: `{"4": 41, "4*": 15}`，ideal_balanced_pool_size = 30
-  - Gating per-rating 统计正确输出
-- 更新规划文件（task_plan.md）标记 Phase 1-3 为 complete
+## 5-Question Reboot Check
 
-## 2026-02-08（完成 Phase 4：文档更新）
-- 更新 `references/abs_journal_recommend.md`：
-  - 补充"按星级分层 gating"策略说明
-  - 明确各星级内的主题贴合排序逻辑
-  - 添加可追溯信息说明（`meta.gating.per_rating_stats`）
-  - 更新星级均衡相关文档
-- 更新 task_plan.md 标记所有 phases 为 complete
+| Question | Answer |
+|----------|--------|
+| Where am I? | Phase 1: 准备和探索 |
+| Where am I going? | Phase 2-6: 创建团队→审阅→汇总→修复→验证 |
+| What's the goal? | 使用 /writing-skills 规范审阅技能，修复 name 大小写及其他问题 |
+| What have I learned? | 已知 SKILL.md 中 name 使用大写，需改为小写 |
+| What have I done? | 创建规划文件结构，准备开始审阅流程 |

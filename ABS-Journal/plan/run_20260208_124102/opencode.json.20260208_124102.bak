@@ -1,0 +1,388 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": true,
+  "mcp": {
+    "Playwright": {
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "enabled": true,
+      "type": "local"
+    },
+    "Ref": {
+      "command": [
+        "npx",
+        "ref-tools-mcp@latest"
+      ],
+      "enabled": true,
+      "environment": {
+        "REF_API_KEY": "ref-6f5673e42e0b75c97c9c"
+      },
+      "type": "local"
+    },
+    "chrome_devtools": {
+      "command": [
+        "npx",
+        "chrome-devtools-mcp@latest"
+      ],
+      "enabled": true,
+      "type": "local"
+    },
+    "comtrade": {
+      "command": [
+        "uvx",
+        "comtrade-mcp-server"
+      ],
+      "enabled": true,
+      "environment": {
+        "COMTRADE_SUBSCRIPTION_KEY": "78035232d8da48c1b27b854a61764f91"
+      },
+      "type": "local"
+    },
+    "context7": {
+      "command": [
+        "npx",
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "enabled": true,
+      "type": "local"
+    },
+    "exa": {
+      "command": [
+        "npx",
+        "-y",
+        "exa-mcp-server",
+        "tools=web_search_exa,get_code_context_exa"
+      ],
+      "enabled": true,
+      "type": "local"
+    },
+    "latex-server": {
+      "command": [
+        "python",
+        "/Users/lingguiwang/mcp-latex-server/latex_server.py"
+      ],
+      "enabled": true,
+      "environment": {
+        "LATEX_BASE_PATH": "/Users/lingguiwang/latex"
+      },
+      "type": "local"
+    },
+    "mcp-deepwiki": {
+      "command": [
+        "npx",
+        "-y",
+        "mcp-deepwiki@latest"
+      ],
+      "enabled": true,
+      "type": "local"
+    },
+    "notebooklm": {
+      "command": [
+        "npx",
+        "-y",
+        "notebooklm-mcp@latest"
+      ],
+      "enabled": true,
+      "type": "local"
+    },
+    "stata-han": {
+      "command": [
+        "mcp-proxy",
+        "http://localhost:4000/mcp"
+      ],
+      "enabled": true,
+      "type": "local"
+    },
+    "stata-sep": {
+      "command": [
+        "uvx",
+        "stata-mcp"
+      ],
+      "enabled": true,
+      "type": "local"
+    }
+  },
+  "model": "google/gemini-3-pro-preview",
+  "plugin": [
+    "opencode-antigravity-auth@latest",
+    "opencode-openai-codex-auth",
+    "oh-my-opencode@latest",
+    "@tarquinen/opencode-dcp@latest"
+  ],
+  "provider": {
+    "google": {
+      "models": {
+        "antigravity-claude-opus-4-5-thinking": {
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Claude Opus 4.5 Thinking (Antigravity)",
+          "variants": {
+            "low": {
+              "thinkingConfig": {
+                "thinkingBudget": 8192
+              }
+            },
+            "max": {
+              "thinkingConfig": {
+                "thinkingBudget": 32768
+              }
+            }
+          }
+        },
+        "antigravity-claude-sonnet-4-5": {
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Claude Sonnet 4.5 (Antigravity)"
+        },
+        "antigravity-claude-sonnet-4-5-thinking": {
+          "limit": {
+            "context": 200000,
+            "output": 64000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Claude Sonnet 4.5 Thinking (Antigravity)",
+          "variants": {
+            "low": {
+              "thinkingConfig": {
+                "thinkingBudget": 8192
+              }
+            },
+            "max": {
+              "thinkingConfig": {
+                "thinkingBudget": 32768
+              }
+            }
+          }
+        },
+        "antigravity-gemini-3-flash": {
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Gemini 3 Flash (Antigravity)",
+          "variants": {
+            "high": {
+              "thinkingLevel": "high"
+            },
+            "low": {
+              "thinkingLevel": "low"
+            },
+            "medium": {
+              "thinkingLevel": "medium"
+            },
+            "minimal": {
+              "thinkingLevel": "minimal"
+            }
+          }
+        },
+        "antigravity-gemini-3-pro": {
+          "limit": {
+            "context": 1048576,
+            "output": 65535
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "Gemini 3 Pro (Antigravity)",
+          "variants": {
+            "high": {
+              "thinkingLevel": "high"
+            },
+            "low": {
+              "thinkingLevel": "low"
+            }
+          }
+        }
+      },
+      "name": "Google"
+    },
+    "openai": {
+      "models": {
+        "gpt-5.1-codex-max": {
+          "limit": {
+            "context": 272000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "GPT 5.1 Codex Max (OAuth)",
+          "variants": {
+            "high": {
+              "reasoningEffort": "high",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            },
+            "low": {
+              "reasoningEffort": "low",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            },
+            "medium": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            }
+          }
+        },
+        "gpt-5.2": {
+          "limit": {
+            "context": 272000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "GPT 5.2 (OAuth)",
+          "variants": {
+            "high": {
+              "reasoningEffort": "high",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            },
+            "low": {
+              "reasoningEffort": "low",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "medium": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "none": {
+              "reasoningEffort": "none",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            }
+          }
+        },
+        "gpt-5.2-codex": {
+          "limit": {
+            "context": 272000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "name": "GPT 5.2 Codex (OAuth)",
+          "variants": {
+            "high": {
+              "reasoningEffort": "high",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            },
+            "low": {
+              "reasoningEffort": "low",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "medium": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            }
+          }
+        }
+      },
+      "name": "OpenAI",
+      "options": {
+        "include": [
+          "reasoning.encrypted_content"
+        ],
+        "reasoningEffort": "medium",
+        "reasoningSummary": "auto",
+        "store": false,
+        "textVerbosity": "medium"
+      }
+    }
+  },
+  "theme": "aura"
+}

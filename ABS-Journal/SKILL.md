@@ -1,9 +1,9 @@
 ---
-name: ABS-Journal
-description: Use when a user asks to recommend target journals via a hybrid ABS/AJG workflow (script candidate pool then AI selection with subset validation), or explicitly asks to fetch/update the AJG/ABS journal guide database.
+name: abs-journal
+description: Use when user asks to recommend academic journals for paper submission, or needs to update the ABS/AJG journal database. Triggers include "推荐期刊", "投稿建议", "journal recommendation", "ABS评级", "AJG评级", "更新数据库", "update database".
 ---
 
-# ABS-Journal
+# abs-journal
 
 ## Core Rules
 

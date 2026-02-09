@@ -1,6 +1,6 @@
 ## Purpose
 
-本文件描述 ABS-Journal skill 的本地数据契约：AJG 抓取脚本产物、文件命名、以及离线校验方式。
+本文件描述 abs-journal skill 的本地数据契约：AJG 抓取脚本产物、文件命名、以及离线校验方式。
 
 ## Output Files (Expected)
 

@@ -1,8 +1,8 @@
-# 09ABS（AJG 抓取 + 投稿期刊推荐）
+# abs-journal（AJG 抓取 + 投稿期刊推荐）
 
 本项目面向单一长期用户：凌贵旺（Guiwang Ling），用于：
 1) 抓取 Chartered ABS Academic Journal Guide（AJG）最新年份期刊目录并落地到本地文件；
-2) 基于本地 AJG 目录对论文进行投稿期刊推荐（skill：`ABS-Journal`）。
+2) 基于本地 AJG 目录对论文进行投稿期刊推荐（skill：`abs-journal`）。
 
 本仓库默认采用 **OpenSpec** 管理能力边界与规格（见 `openspec/specs/`），并通过 `openspec/changes/` 跟踪变更。
 
@@ -64,14 +64,14 @@ python3 scripts/ajg_verify_outputs.py \
   --outdir "$(pwd)/assets/data"
 ```
 
-## 2. 投稿期刊推荐（skill：`ABS-Journal`）
+## 2. 投稿期刊推荐（skill：`abs-journal`）
 
 该推荐 **仅依赖本地 AJG CSV**（默认：`assets/data/ajg_2024_journals_core_custom.csv`），不访问外网。
 
 默认候选期刊来自固定 Field 白名单（AJG CSV 的 `Field` 列；共 5 个 Field，其中 `REGIONAL STUDIES, PLANNING AND ENVIRONMENT` 是一个整体 Field 名称）：
 `ECON, FINANCE, PUB SEC, REGIONAL STUDIES, PLANNING AND ENVIRONMENT, SOC SCI`。
 如需只看某个领域（例如只 ECON），请显式传 `--field_scope ECON`。
-注意：`--field` 仅用于“论文领域标签/关键词配置”，不控制候选范围。
+注意：`--field` 仅用于"论文领域标签/关键词配置"，不控制候选范围。
 
 示例输出见：运行后生成的 `reports/ai_report.md`。
 
@@ -85,10 +85,13 @@ python3 scripts/abs_journal.py \
   --abstract "你的论文摘要（可选）" \
   --mode medium \
   --topk 10 \
-  --rating_filter "1,2,3" \
   --hybrid \
   --export_candidate_pool_json "candidate_pool.json" \
   --auto_ai
+
+# ⚠️ 注意：不要显式传入 --rating_filter 参数
+# 默认会按 mode 自动分层：easy=1,2; medium=2,3; hard=4,4*
+# 显式传入会覆盖默认分层，可能导致三段星级过滤一致
 
 # 运行产出（固定输出目录：reports/）
 # - reports/candidate_pool_easy.json, reports/candidate_pool_medium.json, reports/candidate_pool_hard.json

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""ABS-Journal: Recommend target journals using AJG core catalog.
+"""abs-journal: Recommend target journals using AJG core catalog.
 
 This is the implementation script (moved from the legacy ABS-article skill).
 It does NOT use external web resources; it relies only on the local AJG CSV.
