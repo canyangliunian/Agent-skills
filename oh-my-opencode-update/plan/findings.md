@@ -211,3 +211,63 @@ OMO_CACHE="${OPENCODE_CACHE_DIR}/oh-my-opencode"
 - `plan/findings.md` - 问题发现与决策（本文件）
 - `plan/progress.md` - 会话日志
 - `plan/fix_summary_report.md` - 修复完成报告（待生成）
+
+---
+
+## Session: 2026-02-10 (bun → npm 切换审核)
+
+### 审核发现
+
+#### 问题 1: SKILL.md 中残留 bun 相关说明（第 69-72 行）
+
+**现状**:
+```markdown
+## 常见问题（本机已遇到）
+- `bunx ...` 报 `bun is unable to write files to tempdir: PermissionDenied`
+  - 本技能默认不依赖 bunx；优先在依赖目录内使用 `bun remove/add`。
+- `bun remove/add` 报无法写 `package.json`
+  - 说明目录写权限/沙盒限制；需要提升权限执行。
+```
+
+**影响**:
+- 脚本已经改用 npm（第 147、149、174、176 行），但文档还在说 bun
+- 用户会困惑为什么文档说 bun 但实际用的是 npm
+- 常见问题部分已经过时，不再适用
+
+**解决方案**:
+- 删除或更新"常见问题"部分，改为 npm 相关的常见问题
+- 或者说明"历史上使用过 bun，现已切换到 npm"
+
+---
+
+#### 问题 2: 脚本路径可移植性 ✅ 已解决
+
+**验证结果**:
+- ✅ 脚本使用 `SCRIPT_DIR` 和 `SKILL_ROOT` 动态解析路径（第 16-17 行）
+- ✅ 支持环境变量覆盖所有路径（第 20-22 行）
+- ✅ 日志目录优先使用 `${SKILL_ROOT}/plan`（第 50 行）
+- ✅ 可以从任何位置运行脚本
+
+**结论**: 路径可移植性问题已在之前会话中完全解决。
+
+---
+
+#### 问题 3: 脚本包管理器 ✅ 已使用 npm
+
+**验证结果**:
+- ✅ 第 147 行：`npm uninstall oh-my-opencode`
+- ✅ 第 174 行：`npm install ${pkg}`
+- ✅ 无任何 bun 命令残留
+
+**结论**: 脚本已完全使用 npm，无需修改。
+
+---
+
+### 修复计划
+
+| 问题 | 优先级 | 修复方案 | 状态 |
+|------|--------|----------|------|
+| SKILL.md 残留 bun 说明 | 高 | 更新"常见问题"部分为 npm 相关内容 | pending |
+| 路径可移植性 | - | 已解决 ✅ | complete |
+| 脚本包管理器 | - | 已使用 npm ✅ | complete |
+

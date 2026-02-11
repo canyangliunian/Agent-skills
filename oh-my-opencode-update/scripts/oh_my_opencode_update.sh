@@ -12,6 +12,10 @@ DRY_RUN=0
 # target: "latest" or a semver string
 TARGET="latest"
 
+# 路径配置：获取脚本所在目录和 skill 根目录
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+SKILL_ROOT=$(cd "${SCRIPT_DIR}/.." && pwd)
+
 # 路径配置（优先使用环境变量，否则使用默认值）
 : "${OPENCODE_CONFIG_DIR:=${HOME}/.config/opencode}"
 : "${OPENCODE_CACHE_DIR:=${HOME}/.cache}"
@@ -42,10 +46,9 @@ USAGE
 }
 
 log_base_dir() {
-  # If you run inside the repo that has ./plan, logs go there.
-  # Otherwise, use a temp base.
-  if [ -d "$(pwd)/plan" ]; then
-    echo "$(pwd)/plan"
+  # 优先使用 skill 根目录下的 plan 文件夹
+  if [ -d "${SKILL_ROOT}/plan" ]; then
+    echo "${SKILL_ROOT}/plan"
   else
     echo "/tmp/oh-my-opencode-update"
   fi
@@ -61,7 +64,7 @@ confirm() {
 }
 
 resolve_target_pkg() {
-  # produce bun add argument
+  # produce npm install argument
   if [ "${TARGET}" = "latest" ]; then
     echo "oh-my-opencode@latest"
   else
@@ -124,17 +127,26 @@ main() {
     echo "DRY: cp -a ${OPENCODE_JSON} ${out}/opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
     echo "DRY: cp -a ${OMO_JSON} ${out}/oh-my-opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
   else
-    cp -a "${OPENCODE_JSON}" "${out}/opencode.json.${ts}.bak"
-    cp -a "${OMO_JSON}" "${out}/oh-my-opencode.json.${ts}.bak"
-    shasum -a 256 "${OPENCODE_JSON}" "${out}/opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
-    shasum -a 256 "${OMO_JSON}" "${out}/oh-my-opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
+    if [ -f "${OPENCODE_JSON}" ]; then
+      cp -a "${OPENCODE_JSON}" "${out}/opencode.json.${ts}.bak"
+      shasum -a 256 "${OPENCODE_JSON}" "${out}/opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
+    else
+      echo "WARN: ${OPENCODE_JSON} not found, skipping backup" | tee -a "${out}/log.txt"
+    fi
+
+    if [ -f "${OMO_JSON}" ]; then
+      cp -a "${OMO_JSON}" "${out}/oh-my-opencode.json.${ts}.bak"
+      shasum -a 256 "${OMO_JSON}" "${out}/oh-my-opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
+    else
+      echo "WARN: ${OMO_JSON} not found, skipping backup" | tee -a "${out}/log.txt"
+    fi
   fi
 
   echo "[3/6] Uninstall (gentle)" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
-    echo "DRY: (cd ${CONFIG_DIR} && bun remove oh-my-opencode && bun install)" | tee -a "${out}/log.txt"
+    echo "DRY: (cd ${CONFIG_DIR} && npm uninstall oh-my-opencode)" | tee -a "${out}/log.txt"
   else
-    (cd "${CONFIG_DIR}" && bun remove oh-my-opencode && bun install) | tee -a "${out}/log.txt" || {
+    (cd "${CONFIG_DIR}" && npm uninstall oh-my-opencode) | tee -a "${out}/log.txt" || {
       echo "ERROR: gentle uninstall failed. Stop (no auto escalation)." | tee -a "${out}/log.txt"
       exit 10
     }
@@ -159,9 +171,9 @@ main() {
 
   echo "[5/6] Install/Upgrade" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
-    echo "DRY: (cd ${CONFIG_DIR} && bun add ${pkg})" | tee -a "${out}/log.txt"
+    echo "DRY: (cd ${CONFIG_DIR} && npm install ${pkg})" | tee -a "${out}/log.txt"
   else
-    (cd "${CONFIG_DIR}" && bun add "${pkg}") | tee -a "${out}/log.txt" || {
+    (cd "${CONFIG_DIR}" && npm install "${pkg}") | tee -a "${out}/log.txt" || {
       echo "ERROR: install/upgrade failed. Stop (no auto switch to npm)." | tee -a "${out}/log.txt"
       exit 20
     }

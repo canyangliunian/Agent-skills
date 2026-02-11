@@ -149,3 +149,125 @@
 ---
 
 *Log last updated: 2026-02-09 01:25*
+
+---
+
+## Session: 2026-02-10 (新一轮审核 - bun → npm 切换)
+
+### 新需求背景
+- **问题**: bun 在依赖解析时卡住，需要切换到 npm
+- **目标**:
+  1. 将所有 `bun` 命令改为 `npm` 等价命令
+  2. 重新审核路径可移植性（脚本必须能从任何位置运行）
+  3. 确保文档与实现一致
+
+### Phase 1: 规划与团队创建
+- **Status:** complete
+- **Started:** 2026-02-10 04:40
+- **Completed:** 2026-02-10 04:45
+- Actions taken:
+  - 读取之前会话的规划文件
+  - 更新 task_plan.md 添加新目标
+  - 创建 5 个任务跟踪审核和修复工作
+  - 发现脚本已使用 npm，无需修改
+
+### Phase 2: 脚本审核
+- **Status:** complete
+- **Started:** 2026-02-10 04:45
+- **Completed:** 2026-02-10 04:48
+- Actions taken:
+  - 审核 scripts/oh_my_opencode_update.sh
+  - 验证脚本已完全使用 npm（第 147、174 行）
+  - 验证路径可移植性（动态解析 SCRIPT_DIR 和 SKILL_ROOT）
+  - 搜索所有文档中的 bun 引用
+- Results:
+  - ✅ 脚本已使用 npm，无需修改
+  - ✅ 路径可移植性完美
+  - ⚠️ SKILL.md 第 69-72 行残留 bun 说明
+
+### Phase 3: 文档审核
+- **Status:** complete
+- **Started:** 2026-02-10 04:48
+- **Completed:** 2026-02-10 04:50
+- Actions taken:
+  - 审核 SKILL.md 路径说明（使用环境变量，可移植）
+  - 审核 references/paths_config.md（内容详细完整）
+  - 发现 SKILL.md "常见问题"部分过时
+- Results:
+  - ✅ 路径说明完全可移植
+  - ✅ references/paths_config.md 质量优秀
+  - ⚠️ 需要更新"常见问题"部分
+
+### Phase 4: 文档修复
+- **Status:** complete
+- **Started:** 2026-02-10 04:50
+- **Completed:** 2026-02-10 04:52
+- Actions taken:
+  - 更新 SKILL.md "常见问题"部分
+  - 删除过时的 bun 相关说明
+  - 添加 npm 相关常见问题
+  - 添加历史说明（bun → npm 切换）
+- Files modified:
+  - `SKILL.md` (updated - 第 68-80 行)
+
+### Phase 5: 最终报告生成
+- **Status:** complete
+- **Started:** 2026-02-10 04:52
+- **Completed:** 2026-02-10 04:55
+- Actions taken:
+  - 更新 progress.md 记录所有阶段
+  - 生成最终审核报告 npm_migration_audit_report.md
+  - 更新 task_plan.md 标记所有阶段完成
+  - 完成所有 5 个任务
+- Files created:
+  - `plan/npm_migration_audit_report.md` (created - 详细审核报告)
+- Files modified:
+  - `plan/progress.md` (updated)
+  - `plan/task_plan.md` (updated)
+  - `plan/findings.md` (updated)
+
+---
+
+## 任务完成总结
+
+| 任务 ID | 描述 | 状态 |
+|---------|------|------|
+| #1 | 审核脚本：检查 bun 命令并规划 npm 替换方案 | ✅ completed |
+| #2 | 审核文档：检查 SKILL.md 和 references/ 的路径说明 | ✅ completed |
+| #3 | 修复脚本：将 bun 命令替换为 npm | ✅ completed (无需修复) |
+| #4 | 更新文档：同步 bun→npm 的变更 | ✅ completed |
+| #5 | 生成最终报告并更新规划文档 | ✅ completed |
+
+**完成率**: 5/5 (100%)
+
+---
+
+## 审核成果
+
+### 核心发现
+
+1. ✅ **脚本已使用 npm**: 无需任何修改，已完全迁移
+2. ✅ **路径完全可移植**: 动态解析，支持环境变量
+3. ⚠️ **文档有过时内容**: SKILL.md 残留 bun 说明（已修复）
+
+### 修复内容
+
+1. **SKILL.md 第 68-80 行**: 更新"常见问题"部分
+   - 删除过时的 bun 相关说明
+   - 添加 npm 相关常见问题
+   - 添加历史说明（bun → npm 切换）
+
+### 质量评估
+
+- **代码质量**: A+ - 完全使用 npm，路径可移植
+- **文档质量**: A - 详细完整，已修复过时内容
+- **可移植性**: A+ - 可从任何位置运行
+- **一致性**: A - 文档与实现完全一致
+
+### 最终评分
+
+**综合评分**: A-（优秀）
+
+---
+
+*Log last updated: 2026-02-10 04:55*

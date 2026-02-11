@@ -1,51 +1,38 @@
-# Task Plan: oh-my-opencode-update 路径硬编码修复
+# Task Plan: oh-my-opencode-update 全面审核与修复
 
 ## Goal
-修复 oh-my-opencode-update skill 中的路径硬编码问题，使其可移植、可分享给其他人使用。创建 Agent Team 进行项目审核。
+1. **包管理器切换**：将所有 `bun` 命令改为 `npm`（bun 在依赖解析时卡住）
+2. **路径可移植性审核**：确保脚本能从任何位置运行，自动找到 skill 根目录
+3. **文档一致性审核**：确保 SKILL.md 和 references/ 文档与脚本实现一致
 
 ## Current Phase
-Phase 7: 团队解散 (完成)
+Phase 6: 审核完成 (complete)
 
 ## Phases
 
-### Phase 1: 团队创建与任务规划
-- [x] 创建 oh-my-opencode-fix 团队
-- [x] 定义团队成员：team-lead, path-fix-implementer, reference-reviewer, scripts-reviewer
-- [x] 创建任务列表（7 个任务）
-- [x] 设置任务依赖关系
+### Phase 1: 脚本审核
+- [x] 审核 scripts/oh_my_opencode_update.sh
+- [x] 检查 bun 命令使用情况
+- [x] 验证路径可移植性
+- **Status:** complete
+
+### Phase 2: 文档审核
+- [x] 审核 SKILL.md 路径说明
+- [x] 审核 references/paths_config.md
+- [x] 检查文档与实现一致性
+- **Status:** complete
+
+### Phase 3: 文档修复
+- [x] 更新 SKILL.md "常见问题"部分
+- [x] 移除过时的 bun 说明
+- [x] 添加 npm 相关内容
+- **Status:** complete
+
+### Phase 4: 最终报告
+- [x] 生成审核报告
 - [x] 更新规划文档
+- [x] 完成所有任务
 - **Status:** complete
-
-### Phase 2: 路径修复实施
-- [x] 修复脚本路径硬编码 (scripts/oh_my_opencode_update.sh)
-- [x] 更新 SKILL.md 使用环境变量语法
-- [x] 创建 references/paths_config.md 配置文档
-- **Status:** complete
-
-### Phase 3: 脚本审核
-- [x] scripts-reviewer 使用 requesting-code-review 审核脚本
-- [x] 验证路径解析逻辑正确性
-- [x] 检查无硬编码路径残留
-- **Status:** complete
-
-### Phase 4: 文档审核
-- [x] reference-reviewer 使用 writing-skills 审核文档
-- [x] 检查 SKILL.md 环境变量说明清晰度
-- [x] 检查 paths_config.md 完整性
-- **Status:** complete
-
-### Phase 5: 文档更新与报告
-- [x] 更新 task_plan.md
-- [x] 更新 findings.md
-- [x] 更新 progress.md
-- [x] 生成 fix_summary_report.md
-- **Status:** complete
-
-### Phase 6: 团队解散
-- [ ] 所有任务完成确认
-- [ ] 通知团队成员
-- [ ] 使用 TeamDelete 清理资源
-- **Status:** pending
 
 ## Team Members
 

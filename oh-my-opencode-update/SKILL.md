@@ -65,9 +65,16 @@ node node_modules/.bin/oh-my-opencode --version
 node node_modules/.bin/oh-my-opencode doctor
 ```
 
-## 常见问题（本机已遇到）
-- `bunx ...` 报 `bun is unable to write files to tempdir: PermissionDenied`
-  - 本技能默认不依赖 bunx；优先在依赖目录内使用 `bun remove/add`。
-- `bun remove/add` 报无法写 `package.json`
-  - 说明目录写权限/沙盒限制；需要提升权限执行。
+## 常见问题
+
+### npm 相关问题
+- `npm install` 报权限错误
+  - 检查 `${OPENCODE_CONFIG_DIR}` 的写权限
+  - 确保当前用户对目录有写权限：`ls -ld "${OPENCODE_CONFIG_DIR}"`
+- `npm uninstall` 失败
+  - 可能是 `package.json` 或 `node_modules` 权限问题
+  - 检查目录权限或使用 `sudo`（不推荐，优先修复目录权限）
+
+### 历史说明
+- 本 skill 早期版本使用 `bun` 作为包管理器，现已切换到 `npm` 以提高兼容性和稳定性
 
