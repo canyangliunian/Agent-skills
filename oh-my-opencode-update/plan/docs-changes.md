@@ -554,3 +554,79 @@ brew install coreutils
 **报告更新时间**: 2026-02-11 23:20
 **更新人**: documenter (Claude Opus 4.6)
 **状态**: ✅ 文档与脚本完全一致
+
+---
+
+### 11.6 精确版本安装（2026-02-11 第三次更新）
+
+**问题背景**:
+
+用户在会话中发现：指定安装 `oh-my-opencode@3.5.1`，但实际安装的是 `3.5.2`。
+
+**根本原因**:
+
+npm 默认在 `package.json` 中使用 `^` 版本范围符号（如 `^3.5.1`），允许自动升级到兼容的更高版本（如 `3.5.2`）。
+
+**解决方案**:
+
+在所有 `npm install` 命令中添加 `--save-exact` 选项，确保安装精确版本。
+
+**修改内容**:
+
+| 文件 | 修改位置 | 修改内容 |
+|------|---------|---------|
+| `scripts/oh_my_opencode_update.sh` | 第 228 行 | 添加 `--save-exact` 到正常安装 |
+| `scripts/oh_my_opencode_update.sh` | 第 238 行 | 添加 `--save-exact` 到回退安装 |
+| `scripts/oh_my_opencode_update.sh` | 第 219 行 | 更新 dry-run 提示信息 |
+| `SKILL.md` | 第 29-36 行 | 更新 [5/7] Install/Upgrade 详解 |
+
+**SKILL.md 更新内容**:
+
+```markdown
+### [5/7] Install/Upgrade 详解
+
+安装过程采用双重策略：
+
+1. **首次尝试**：正常 `npm install --save-exact`（带超时保护）
+2. **自动回退**：若失败或超时，自动使用 `--save-exact --ignore-scripts` 重试
+
+**关键特性**：
+- `--save-exact`：确保安装精确版本，避免 npm 自动添加 `^` 导致版本升级
+- 超时保护：防止 `postinstall` 脚本卡住
+```
+
+**经验教训**:
+
+#### 11.6.1 npm 版本范围的陷阱
+
+**问题**: npm 的 `^` 符号允许自动升级到兼容版本，可能导致：
+- 用户指定的版本与实际安装的版本不一致
+- 难以复现问题（不同时间安装可能得到不同版本）
+- 破坏版本锁定的预期
+
+**解决**: 使用 `--save-exact` 确保 `package.json` 中记录精确版本（无 `^` 前缀）。
+
+**最佳实践**:
+```bash
+# 不推荐（会添加 ^）
+npm install oh-my-opencode@3.5.1
+
+# 推荐（精确版本）
+npm install oh-my-opencode@3.5.1 --save-exact
+```
+
+**验证方法**:
+```bash
+# 检查 package.json
+cat package.json | grep oh-my-opencode
+# 应该显示: "oh-my-opencode": "3.5.1"（无 ^ 前缀）
+
+# 检查实际安装版本
+npm list oh-my-opencode
+```
+
+---
+
+**报告更新时间**: 2026-02-11 23:35
+**更新人**: Kiro AI Assistant
+**状态**: ✅ 文档与脚本完全一致

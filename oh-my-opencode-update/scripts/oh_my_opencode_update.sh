@@ -216,8 +216,8 @@ main() {
 
   echo "[5/7] Install/Upgrade" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
-    echo "DRY: (cd ${CONFIG_DIR} && npm install ${pkg})" | tee -a "${out}/log.txt"
-    echo "DRY: fallback with --ignore-scripts if postinstall hangs" | tee -a "${out}/log.txt"
+    echo "DRY: (cd ${CONFIG_DIR} && npm install ${pkg} --save-exact)" | tee -a "${out}/log.txt"
+    echo "DRY: fallback with --save-exact --ignore-scripts if postinstall hangs" | tee -a "${out}/log.txt"
   else
     local install_success=0
     local install_output=""
@@ -225,17 +225,17 @@ main() {
     # Try normal install first (with optional timeout)
     echo "Attempting npm install (timeout: ${NPM_INSTALL_TIMEOUT}s)..." | tee -a "${out}/log.txt"
     if [ -n "${TIMEOUT_CMD}" ] && [ "${NPM_INSTALL_TIMEOUT}" -gt 0 ]; then
-      install_output=$(${TIMEOUT_CMD} "${NPM_INSTALL_TIMEOUT}" npm install "${pkg}" --prefix "${CONFIG_DIR}" 2>&1) && install_success=1 || install_success=0
+      install_output=$(${TIMEOUT_CMD} "${NPM_INSTALL_TIMEOUT}" npm install "${pkg}" --save-exact --prefix "${CONFIG_DIR}" 2>&1) && install_success=1 || install_success=0
       echo "${install_output}" | tee -a "${out}/log.txt"
     else
-      install_output=$((cd "${CONFIG_DIR}" && npm install "${pkg}") 2>&1) && install_success=1 || install_success=0
+      install_output=$((cd "${CONFIG_DIR}" && npm install "${pkg}" --save-exact) 2>&1) && install_success=1 || install_success=0
       echo "${install_output}" | tee -a "${out}/log.txt"
     fi
 
     # If failed or timed out, try with --ignore-scripts
     if [ ${install_success} -eq 0 ]; then
       echo "WARN: npm install failed or timed out. Trying with --ignore-scripts..." | tee -a "${out}/log.txt"
-      (cd "${CONFIG_DIR}" && npm install "${pkg}" --ignore-scripts) 2>&1 | tee -a "${out}/log.txt" || {
+      (cd "${CONFIG_DIR}" && npm install "${pkg}" --save-exact --ignore-scripts) 2>&1 | tee -a "${out}/log.txt" || {
         echo "ERROR: npm install failed even with --ignore-scripts. Possible causes:" | tee -a "${out}/log.txt"
         echo "  1. Network issue - check internet connection" | tee -a "${out}/log.txt"
         echo "     Test: curl -I https://registry.npmjs.org/" | tee -a "${out}/log.txt"

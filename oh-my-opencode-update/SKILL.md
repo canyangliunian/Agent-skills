@@ -30,10 +30,12 @@ description: Use when upgrading, reinstalling, or troubleshooting the oh-my-open
 
 安装过程采用双重策略：
 
-1. **首次尝试**：正常 `npm install`（带超时保护）
-2. **自动回退**：若失败或超时，自动使用 `--ignore-scripts` 重试
+1. **首次尝试**：正常 `npm install --save-exact`（带超时保护）
+2. **自动回退**：若失败或超时，自动使用 `--save-exact --ignore-scripts` 重试
 
-这种策略可以处理 `postinstall` 脚本卡住的问题。
+**关键特性**：
+- `--save-exact`：确保安装精确版本，避免 npm 自动添加 `^` 导致版本升级
+- 超时保护：防止 `postinstall` 脚本卡住
 
 ## 适用环境（可通过环境变量自定义）
 
