@@ -63,6 +63,17 @@ confirm() {
   esac
 }
 
+# timeout for npm install (in seconds), 0 = no timeout
+: "${NPM_INSTALL_TIMEOUT:=120}"
+
+# Check if timeout command is available
+TIMEOUT_CMD=""
+if command -v timeout &> /dev/null; then
+  TIMEOUT_CMD="timeout"
+elif command -v gtimeout &> /dev/null; then
+  TIMEOUT_CMD="gtimeout"  # macOS with coreutils
+fi
+
 resolve_target_pkg() {
   # produce npm install argument
   if [ "${TARGET}" = "latest" ]; then
@@ -118,11 +129,41 @@ main() {
 
   echo "[oh-my-opencode-update] mode=${MODE} target=${TARGET} logdir=${out}"
 
-  echo "[1/6] Baseline" | tee -a "${out}/log.txt"
+  # [0/7] Prerequisites check
+  echo "[0/7] Prerequisites check" | tee -a "${out}/log.txt"
+
+  # Check npm
+  if ! command -v npm &> /dev/null; then
+    echo "ERROR: npm not found. Please install Node.js and npm first." | tee -a "${out}/log.txt"
+    echo "  Download: https://nodejs.org/" | tee -a "${out}/log.txt"
+    exit 1
+  fi
+  echo "npm: $(npm --version)" | tee -a "${out}/log.txt"
+
+  # Check node
+  if ! command -v node &> /dev/null; then
+    echo "ERROR: node not found. Please install Node.js first." | tee -a "${out}/log.txt"
+    echo "  Download: https://nodejs.org/" | tee -a "${out}/log.txt"
+    exit 1
+  fi
+  echo "node: $(node --version)" | tee -a "${out}/log.txt"
+
+  # Check config directory exists and is writable
+  if [ ! -d "${CONFIG_DIR}" ]; then
+    echo "WARN: Config directory does not exist: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+    echo "      Will attempt to create it during installation." | tee -a "${out}/log.txt"
+  elif [ ! -w "${CONFIG_DIR}" ]; then
+    echo "ERROR: Config directory is not writable: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+    echo "  Check permissions: ls -ld ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+    echo "  Fix with: chmod u+w ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+    exit 1
+  fi
+
+  echo "[1/7] Baseline" | tee -a "${out}/log.txt"
   echo "opencode: $(command -v opencode)" | tee -a "${out}/log.txt"
   opencode --version | tee -a "${out}/log.txt" || true
 
-  echo "[2/6] Backup configs" | tee -a "${out}/log.txt"
+  echo "[2/7] Backup configs" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: cp -a ${OPENCODE_JSON} ${out}/opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
     echo "DRY: cp -a ${OMO_JSON} ${out}/oh-my-opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
@@ -142,17 +183,21 @@ main() {
     fi
   fi
 
-  echo "[3/6] Uninstall (gentle)" | tee -a "${out}/log.txt"
+  echo "[3/7] Uninstall (gentle)" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: (cd ${CONFIG_DIR} && npm uninstall oh-my-opencode)" | tee -a "${out}/log.txt"
   else
-    (cd "${CONFIG_DIR}" && npm uninstall oh-my-opencode) | tee -a "${out}/log.txt" || {
-      echo "ERROR: gentle uninstall failed. Stop (no auto escalation)." | tee -a "${out}/log.txt"
+    (cd "${CONFIG_DIR}" && npm uninstall oh-my-opencode) 2>&1 | tee -a "${out}/log.txt" || {
+      echo "ERROR: npm uninstall failed. Possible causes:" | tee -a "${out}/log.txt"
+      echo "  1. Package not installed - this is OK for first-time installation" | tee -a "${out}/log.txt"
+      echo "  2. Permission issue - check directory permissions" | tee -a "${out}/log.txt"
+      echo "     Fix: ls -ld ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+      echo "  3. Lock file issue - try: rm -f ${CONFIG_DIR}/package-lock.json" | tee -a "${out}/log.txt"
       exit 10
     }
   fi
 
-  echo "[4/6] Cache cleanup (optional)" | tee -a "${out}/log.txt"
+  echo "[4/7] Cache cleanup (optional)" | tee -a "${out}/log.txt"
   if [ -d "${OMO_CACHE}" ]; then
     echo "Found cache dir: ${OMO_CACHE}" | tee -a "${out}/log.txt"
     if [ ${DRY_RUN} -eq 1 ]; then
@@ -169,17 +214,45 @@ main() {
     echo "No cache dir ${OMO_CACHE}" | tee -a "${out}/log.txt"
   fi
 
-  echo "[5/6] Install/Upgrade" | tee -a "${out}/log.txt"
+  echo "[5/7] Install/Upgrade" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: (cd ${CONFIG_DIR} && npm install ${pkg})" | tee -a "${out}/log.txt"
+    echo "DRY: fallback with --ignore-scripts if postinstall hangs" | tee -a "${out}/log.txt"
   else
-    (cd "${CONFIG_DIR}" && npm install "${pkg}") | tee -a "${out}/log.txt" || {
-      echo "ERROR: install/upgrade failed. Stop (no auto switch to npm)." | tee -a "${out}/log.txt"
-      exit 20
-    }
+    local install_success=0
+    local install_output=""
+
+    # Try normal install first (with optional timeout)
+    echo "Attempting npm install (timeout: ${NPM_INSTALL_TIMEOUT}s)..." | tee -a "${out}/log.txt"
+    if [ -n "${TIMEOUT_CMD}" ] && [ "${NPM_INSTALL_TIMEOUT}" -gt 0 ]; then
+      install_output=$(${TIMEOUT_CMD} "${NPM_INSTALL_TIMEOUT}" npm install "${pkg}" --prefix "${CONFIG_DIR}" 2>&1) && install_success=1 || install_success=0
+      echo "${install_output}" | tee -a "${out}/log.txt"
+    else
+      install_output=$((cd "${CONFIG_DIR}" && npm install "${pkg}") 2>&1) && install_success=1 || install_success=0
+      echo "${install_output}" | tee -a "${out}/log.txt"
+    fi
+
+    # If failed or timed out, try with --ignore-scripts
+    if [ ${install_success} -eq 0 ]; then
+      echo "WARN: npm install failed or timed out. Trying with --ignore-scripts..." | tee -a "${out}/log.txt"
+      (cd "${CONFIG_DIR}" && npm install "${pkg}" --ignore-scripts) 2>&1 | tee -a "${out}/log.txt" || {
+        echo "ERROR: npm install failed even with --ignore-scripts. Possible causes:" | tee -a "${out}/log.txt"
+        echo "  1. Network issue - check internet connection" | tee -a "${out}/log.txt"
+        echo "     Test: curl -I https://registry.npmjs.org/" | tee -a "${out}/log.txt"
+        echo "  2. Permission issue - check directory permissions" | tee -a "${out}/log.txt"
+        echo "     Check: ls -ld ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+        echo "  3. Registry issue - try using official registry:" | tee -a "${out}/log.txt"
+        echo "     Fix: npm config set registry https://registry.npmjs.org/" | tee -a "${out}/log.txt"
+        echo "  4. Disk space issue - check available space" | tee -a "${out}/log.txt"
+        echo "     Check: df -h ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+        exit 20
+      }
+      echo "INFO: Installation succeeded with --ignore-scripts" | tee -a "${out}/log.txt"
+      echo "NOTE: Some optional dependencies may not be fully configured." | tee -a "${out}/log.txt"
+    fi
   fi
 
-  echo "[6/6] Verify" | tee -a "${out}/log.txt"
+  echo "[6/7] Verify" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode --version" | tee -a "${out}/log.txt"
     echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode doctor" | tee -a "${out}/log.txt"
