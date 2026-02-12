@@ -56,7 +56,10 @@ log_base_dir() {
 
 confirm() {
   local prompt="$1"
-  read -r -p "${prompt} [y/N] " ans
+  local ans=""
+  if ! read -r -p "${prompt} [y/N] " ans; then
+    return 1
+  fi
   case "${ans}" in
     y|Y|yes|YES) return 0 ;;
     *) return 1 ;;
@@ -129,8 +132,8 @@ main() {
 
   echo "[oh-my-opencode-update] mode=${MODE} target=${TARGET} logdir=${out}"
 
-  # [0/7] Prerequisites check
-  echo "[0/7] Prerequisites check" | tee -a "${out}/log.txt"
+  # [1/7] Prerequisites check
+  echo "[1/7] Prerequisites check" | tee -a "${out}/log.txt"
 
   # Check npm
   if ! command -v npm &> /dev/null; then
@@ -148,22 +151,51 @@ main() {
   fi
   echo "node: $(node --version)" | tee -a "${out}/log.txt"
 
-  # Check config directory exists and is writable
+  # Ensure config directory exists and is writable
   if [ ! -d "${CONFIG_DIR}" ]; then
     echo "WARN: Config directory does not exist: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
-    echo "      Will attempt to create it during installation." | tee -a "${out}/log.txt"
-  elif [ ! -w "${CONFIG_DIR}" ]; then
+    if [ ${DRY_RUN} -eq 1 ]; then
+      echo "      DRY: would create it: mkdir -p ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+    else
+      mkdir -p "${CONFIG_DIR}" || {
+        echo "ERROR: Failed to create config directory: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+        exit 1
+      }
+      echo "Created config directory: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+    fi
+  fi
+
+  if [ -d "${CONFIG_DIR}" ] && [ ! -w "${CONFIG_DIR}" ]; then
     echo "ERROR: Config directory is not writable: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
     echo "  Check permissions: ls -ld ${CONFIG_DIR}" | tee -a "${out}/log.txt"
     echo "  Fix with: chmod u+w ${CONFIG_DIR}" | tee -a "${out}/log.txt"
     exit 1
   fi
 
-  echo "[1/7] Baseline" | tee -a "${out}/log.txt"
-  echo "opencode: $(command -v opencode)" | tee -a "${out}/log.txt"
-  opencode --version | tee -a "${out}/log.txt" || true
+  echo "[2/7] Baseline" | tee -a "${out}/log.txt"
+  echo "OPENCODE_BIN: ${OPENCODE_BIN}" | tee -a "${out}/log.txt"
 
-  echo "[2/7] Backup configs" | tee -a "${out}/log.txt"
+  local opencode_cmd=""
+  if [ -x "${OPENCODE_BIN}" ]; then
+    opencode_cmd="${OPENCODE_BIN}"
+
+    local opencode_bin_dir=""
+    opencode_bin_dir="$(dirname "${OPENCODE_BIN}")"
+    PATH="${opencode_bin_dir}:${PATH}"
+    export PATH
+    echo "PATH prepend: ${opencode_bin_dir}" | tee -a "${out}/log.txt"
+  elif command -v opencode &> /dev/null; then
+    opencode_cmd="$(command -v opencode)"
+  fi
+
+  if [ -n "${opencode_cmd}" ]; then
+    echo "opencode: ${opencode_cmd}" | tee -a "${out}/log.txt"
+    "${opencode_cmd}" --version | tee -a "${out}/log.txt" || true
+  else
+    echo "WARN: opencode command not found. Set OPENCODE_BIN or add opencode to PATH." | tee -a "${out}/log.txt"
+  fi
+
+  echo "[3/7] Backup configs" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: cp -a ${OPENCODE_JSON} ${out}/opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
     echo "DRY: cp -a ${OMO_JSON} ${out}/oh-my-opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
@@ -183,21 +215,23 @@ main() {
     fi
   fi
 
-  echo "[3/7] Uninstall (gentle)" | tee -a "${out}/log.txt"
+  echo "[4/7] Uninstall (gentle)" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: (cd ${CONFIG_DIR} && npm uninstall oh-my-opencode)" | tee -a "${out}/log.txt"
   else
-    (cd "${CONFIG_DIR}" && npm uninstall oh-my-opencode) 2>&1 | tee -a "${out}/log.txt" || {
-      echo "ERROR: npm uninstall failed. Possible causes:" | tee -a "${out}/log.txt"
-      echo "  1. Package not installed - this is OK for first-time installation" | tee -a "${out}/log.txt"
-      echo "  2. Permission issue - check directory permissions" | tee -a "${out}/log.txt"
-      echo "     Fix: ls -ld ${CONFIG_DIR}" | tee -a "${out}/log.txt"
-      echo "  3. Lock file issue - try: rm -f ${CONFIG_DIR}/package-lock.json" | tee -a "${out}/log.txt"
-      exit 10
-    }
+    set +e
+    (cd "${CONFIG_DIR}" && npm uninstall oh-my-opencode) 2>&1 | tee -a "${out}/log.txt"
+    local uninstall_rc=${PIPESTATUS[0]}
+    set -e
+
+    if [ ${uninstall_rc} -ne 0 ]; then
+      echo "WARN: npm uninstall failed (rc=${uninstall_rc})." | tee -a "${out}/log.txt"
+      echo "      This is often OK if the package was not installed yet." | tee -a "${out}/log.txt"
+      echo "      Continuing to installation step." | tee -a "${out}/log.txt"
+    fi
   fi
 
-  echo "[4/7] Cache cleanup (optional)" | tee -a "${out}/log.txt"
+  echo "[5/7] Cache cleanup (optional)" | tee -a "${out}/log.txt"
   if [ -d "${OMO_CACHE}" ]; then
     echo "Found cache dir: ${OMO_CACHE}" | tee -a "${out}/log.txt"
     if [ ${DRY_RUN} -eq 1 ]; then
@@ -214,7 +248,7 @@ main() {
     echo "No cache dir ${OMO_CACHE}" | tee -a "${out}/log.txt"
   fi
 
-  echo "[5/7] Install/Upgrade" | tee -a "${out}/log.txt"
+  echo "[6/7] Install/Upgrade" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: (cd ${CONFIG_DIR} && npm install ${pkg} --save-exact)" | tee -a "${out}/log.txt"
     echo "DRY: fallback with --save-exact --ignore-scripts if postinstall hangs" | tee -a "${out}/log.txt"
@@ -228,15 +262,20 @@ main() {
       install_output=$(${TIMEOUT_CMD} "${NPM_INSTALL_TIMEOUT}" npm install "${pkg}" --save-exact --prefix "${CONFIG_DIR}" 2>&1) && install_success=1 || install_success=0
       echo "${install_output}" | tee -a "${out}/log.txt"
     else
-      install_output=$((cd "${CONFIG_DIR}" && npm install "${pkg}" --save-exact) 2>&1) && install_success=1 || install_success=0
+      install_output=$( (cd "${CONFIG_DIR}" && npm install "${pkg}" --save-exact) 2>&1 ) && install_success=1 || install_success=0
       echo "${install_output}" | tee -a "${out}/log.txt"
     fi
 
     # If failed or timed out, try with --ignore-scripts
     if [ ${install_success} -eq 0 ]; then
       echo "WARN: npm install failed or timed out. Trying with --ignore-scripts..." | tee -a "${out}/log.txt"
-      (cd "${CONFIG_DIR}" && npm install "${pkg}" --save-exact --ignore-scripts) 2>&1 | tee -a "${out}/log.txt" || {
-        echo "ERROR: npm install failed even with --ignore-scripts. Possible causes:" | tee -a "${out}/log.txt"
+      set +e
+      (cd "${CONFIG_DIR}" && npm install "${pkg}" --save-exact --ignore-scripts) 2>&1 | tee -a "${out}/log.txt"
+      local ignore_scripts_rc=${PIPESTATUS[0]}
+      set -e
+
+      if [ ${ignore_scripts_rc} -ne 0 ]; then
+        echo "ERROR: npm install failed even with --ignore-scripts (rc=${ignore_scripts_rc}). Possible causes:" | tee -a "${out}/log.txt"
         echo "  1. Network issue - check internet connection" | tee -a "${out}/log.txt"
         echo "     Test: curl -I https://registry.npmjs.org/" | tee -a "${out}/log.txt"
         echo "  2. Permission issue - check directory permissions" | tee -a "${out}/log.txt"
@@ -246,13 +285,14 @@ main() {
         echo "  4. Disk space issue - check available space" | tee -a "${out}/log.txt"
         echo "     Check: df -h ${CONFIG_DIR}" | tee -a "${out}/log.txt"
         exit 20
-      }
+      fi
+
       echo "INFO: Installation succeeded with --ignore-scripts" | tee -a "${out}/log.txt"
       echo "NOTE: Some optional dependencies may not be fully configured." | tee -a "${out}/log.txt"
     fi
   fi
 
-  echo "[6/7] Verify" | tee -a "${out}/log.txt"
+  echo "[7/7] Verify" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode --version" | tee -a "${out}/log.txt"
     echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode doctor" | tee -a "${out}/log.txt"

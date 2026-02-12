@@ -33,7 +33,7 @@ opencode 配置目录，也是 oh-my-opencode 的安装位置。
 opencode 二进制文件的完整路径。
 
 - **默认值**: `${HOME}/.opencode/bin/opencode`
-- **说明**: opencode 命令行工具的位置。通常不需要手动设置，会从 PATH 或默认位置查找。
+- **说明**: opencode 命令行工具的位置。脚本会优先使用具备执行权限（可执行）的 `${OPENCODE_BIN}`；若该文件不存在或不可执行，则回退到 PATH 中的 `opencode`。
 - **示例**:
   ```bash
   export OPENCODE_BIN="${HOME}/.opencode/bin/opencode"
@@ -125,7 +125,7 @@ echo ""
 echo "目录检查:"
 [ -d "${OPENCODE_CONFIG_DIR}" ] && echo "✓ OPENCODE_CONFIG_DIR 存在" || echo "✗ OPENCODE_CONFIG_DIR 不存在"
 [ -d "${OPENCODE_CACHE_DIR}" ] && echo "✓ OPENCODE_CACHE_DIR 存在" || echo "✗ OPENCODE_CACHE_DIR 不存在"
-[ -f "${OPENCODE_BIN}" ] && echo "✓ OPENCODE_BIN 存在" || echo "✗ OPENCODE_BIN 不存在"
+[ -x "${OPENCODE_BIN}" ] && echo "✓ OPENCODE_BIN 可执行" || echo "✗ OPENCODE_BIN 不可执行或不存在"
 ```
 
 ## 常见配置场景
@@ -166,7 +166,7 @@ export OPENCODE_BIN="/usr/local/bin/opencode"
 
 **解决方案**:
 1. 检查 `OPENCODE_CONFIG_DIR` 的写权限
-2. 如果目录不存在，手动创建：
+2. 如果目录不存在：脚本在 `--apply` 模式会自动创建；如创建失败再手动创建：
    ```bash
    mkdir -p "${OPENCODE_CONFIG_DIR}"
    ```
@@ -178,7 +178,7 @@ export OPENCODE_BIN="/usr/local/bin/opencode"
 ### 问题：找不到 opencode 命令
 
 **解决方案**:
-1. 设置 `OPENCODE_BIN` 环境变量指向正确的 opencode 二进制路径
+1. 设置 `OPENCODE_BIN` 环境变量指向正确的 opencode 二进制路径，并确保该文件可执行（必要时 `chmod +x "${OPENCODE_BIN}"`）
 2. 或者确保 opencode 在系统 PATH 中：
    ```bash
    which opencode
@@ -206,18 +206,20 @@ export OPENCODE_BIN="/usr/local/bin/opencode"
 ## 环境变量优先级
 
 1. 用户显式设置的环境变量（最高优先级）
-2. 脚本中的默认值 `${VAR:-default}`
+2. 脚本中的默认值（通过 `: "${VAR:=default}"` 设定）
 
-脚本使用 `${VAR:-default}` 语法，这意味着：
-- 如果设置了环境变量，使用环境变量的值
-- 如果未设置，使用冒号后面的默认值
+脚本使用 `: "${VAR:=default}"` 语法，这意味着：
+- 如果变量已设置且非空：保持原值
+- 如果变量未设置或为空：将其设置为默认值
 
 例如：
 ```bash
 : "${OPENCODE_CONFIG_DIR:=${HOME}/.config/opencode}"
 ```
 
-这行代码的意思是：如果 `OPENCODE_CONFIG_DIR` 已设置且非空，使用它的值；否则使用 `${HOME}/.config/opencode`。
+这行代码的意思是：如果 `OPENCODE_CONFIG_DIR` 已设置且非空，使用它的值；否则将其设置为 `${HOME}/.config/opencode`。
+
+> 备注：`${VAR:-default}` 只是在变量为空/未设置时“展开默认值”，不会写回变量；本脚本采用 `:=` 写回，便于后续统一引用。
 
 ## 最佳实践
 
