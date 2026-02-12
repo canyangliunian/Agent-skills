@@ -119,3 +119,29 @@ bash scripts/oh_my_opencode_update.sh --apply --target-version 3.2.2
 ### 历史说明
 - 本 skill 早期版本使用 `bun` 作为包管理器，现已切换到 `npm` 以提高兼容性和稳定性
 
+### 版本控制方案
+
+**当前配置**：`~/.config/opencode/opencode.json` 中配置为 `oh-my-opencode@latest`
+
+| 配置方式 | 行为 |
+|---------|------|
+| `oh-my-opencode@latest` | opencode **启动时**从 npm registry 自动查询并下载最新版本 |
+| `oh-my-opencode@3.5.1` | 固定使用 3.5.1 版本，不自动更新 |
+
+**@latest 的问题**：
+- 无法控制更新时机（不确定何时检查更新）
+- 自动下载的版本缓存可能导致版本显示问题
+- 失去版本控制权（无法固定使用特定版本）
+
+**建议方案**（暂时未实施）：
+修改 `~/.config/opencode/opencode.json`，将 `oh-my-opencode@latest` 改为固定版本，如 `oh-my-opencode@3.5.1`。
+
+这样可以：
+- 完全控制使用的版本
+- 不会自动更新
+- 需要手动更新时才修改配置
+
+**相关文件**：
+- 配置文件：`~/.config/opencode/opencode.json`
+- 版本检查缓存：`~/.cache/opencode/node_modules/oh-my-opencode/package.json`
+
