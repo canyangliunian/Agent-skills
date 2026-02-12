@@ -22,7 +22,7 @@ description: Use when upgrading, reinstalling, or troubleshooting the oh-my-open
 | [2/7] | Baseline | 记录当前环境信息 |
 | [3/7] | Backup configs | 备份 opencode.json 和 oh-my-opencode.json |
 | [4/7] | Uninstall (gentle) | 温和卸载旧版本（失败仅 WARN 并继续） |
-| [5/7] | Cache cleanup | 可选的缓存清理（需确认） |
+| [5/7] | Cache cleanup (optional) | 可选的缓存清理（需确认），包括 ~/.cache/oh-my-opencode 和 ~/.cache/opencode/node_modules/oh-my-opencode* |
 | [6/7] | Install/Upgrade | 安装新版本（支持超时回退） |
 | [7/7] | Verify | 验证安装结果（doctor 失败不阻塞） |
 
@@ -30,7 +30,7 @@ description: Use when upgrading, reinstalling, or troubleshooting the oh-my-open
 
 安装过程采用双重策略：
 
-1. **首次尝试**：正常 `npm install --save-exact`（带超时保护）
+1. **首次尝试**：正常 `npm install --save-exact`（在 `timeout`/`gtimeout` 可用时带超时保护）
 2. **自动回退**：若失败或超时，自动使用 `--save-exact --ignore-scripts` 重试
 
 **关键特性**：
@@ -50,9 +50,10 @@ description: Use when upgrading, reinstalling, or troubleshooting the oh-my-open
 | `NPM_INSTALL_TIMEOUT` | `120` | npm install 超时时间（秒），`0` 表示无超时 |
 
 ### 配置文件
-- opencode 配置：`${OPENCODE_CONFIG_DIR}/opencode.json`
-- oh-my-opencode 配置：`${OPENCODE_CONFIG_DIR}/oh-my-opencode.json`
-- 缓存目录：`${OPENCODE_CACHE_DIR}/oh-my-opencode`
+- opencode 配置：`~/.config/opencode/opencode.json` （环境变量：`OPENCODE_CONFIG_DIR`）
+- oh-my-opencode 配置：`~/.config/opencode/oh-my-opencode.json`
+- 缓存目录：`~/.cache/oh-my-opencode`
+- opencode 插件缓存（版本信息读取位置）：`~/.cache/opencode/node_modules/oh-my-opencode*`
 
 ### 自定义路径（可选）
 ```bash
@@ -86,9 +87,8 @@ bash scripts/oh_my_opencode_update.sh --apply --target-version 3.2.2
 
 ## 验收（必须做）
 ```bash
-cd ${OPENCODE_CONFIG_DIR}
-node node_modules/.bin/oh-my-opencode --version
-node node_modules/.bin/oh-my-opencode doctor
+(cd "${OPENCODE_CONFIG_DIR}" && node node_modules/.bin/oh-my-opencode --version)
+(cd "${OPENCODE_CONFIG_DIR}" && node node_modules/.bin/oh-my-opencode doctor)
 ```
 
 ## 常见问题

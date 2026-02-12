@@ -26,6 +26,7 @@ CONFIG_DIR="${OPENCODE_CONFIG_DIR}"
 OPENCODE_JSON="${CONFIG_DIR}/opencode.json"
 OMO_JSON="${CONFIG_DIR}/oh-my-opencode.json"
 OMO_CACHE="${OPENCODE_CACHE_DIR}/oh-my-opencode"
+OPENCODE_OMO_CACHE="${OPENCODE_CACHE_DIR}/opencode/node_modules/oh-my-opencode"
 
 usage() {
   cat <<'USAGE'
@@ -75,6 +76,16 @@ if command -v timeout &> /dev/null; then
   TIMEOUT_CMD="timeout"
 elif command -v gtimeout &> /dev/null; then
   TIMEOUT_CMD="gtimeout"  # macOS with coreutils
+fi
+
+# SHA256 checksum command (cross-platform)
+SHA256_CMD=""
+if command -v shasum &> /dev/null; then
+  SHA256_CMD="shasum -a 256"
+elif command -v openssl &> /dev/null; then
+  SHA256_CMD="openssl dgst -sha256"
+else
+  SHA256_CMD="sha256sum"  # Linux (may not be available on some macOS)
 fi
 
 resolve_target_pkg() {
@@ -202,14 +213,14 @@ main() {
   else
     if [ -f "${OPENCODE_JSON}" ]; then
       cp -a "${OPENCODE_JSON}" "${out}/opencode.json.${ts}.bak"
-      shasum -a 256 "${OPENCODE_JSON}" "${out}/opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
+      ${SHA256_CMD} "${OPENCODE_JSON}" "${out}/opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
     else
       echo "WARN: ${OPENCODE_JSON} not found, skipping backup" | tee -a "${out}/log.txt"
     fi
 
     if [ -f "${OMO_JSON}" ]; then
       cp -a "${OMO_JSON}" "${out}/oh-my-opencode.json.${ts}.bak"
-      shasum -a 256 "${OMO_JSON}" "${out}/oh-my-opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
+      ${SHA256_CMD} "${OMO_JSON}" "${out}/oh-my-opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
     else
       echo "WARN: ${OMO_JSON} not found, skipping backup" | tee -a "${out}/log.txt"
     fi
@@ -246,6 +257,34 @@ main() {
     fi
   else
     echo "No cache dir ${OMO_CACHE}" | tee -a "${out}/log.txt"
+  fi
+
+  # Clean opencode plugin cache (where version info is read from)
+  # Use glob pattern to clean all oh-my-opencode related caches
+  local opencode_plugin_cache_dir="${OPENCODE_CACHE_DIR}/opencode/node_modules"
+  if [ -d "${opencode_plugin_cache_dir}" ]; then
+    local found_cache=0
+    for cache_path in "${opencode_plugin_cache_dir}"/oh-my-opencode*; do
+      if [ -e "${cache_path}" ]; then
+        found_cache=1
+        echo "Found opencode plugin cache: ${cache_path}" | tee -a "${out}/log.txt"
+        if [ ${DRY_RUN} -eq 1 ]; then
+          echo "DRY: rm -rf ${cache_path} (would ask confirmation)" | tee -a "${out}/log.txt"
+        else
+          if confirm "Delete opencode plugin cache ${cache_path}?"; then
+            rm -rf "${cache_path}"
+            echo "Deleted ${cache_path}" | tee -a "${out}/log.txt"
+          else
+            echo "Skipped deleting ${cache_path}" | tee -a "${out}/log.txt"
+          fi
+        fi
+      fi
+    done
+    if [ ${found_cache} -eq 0 ]; then
+      echo "No oh-my-opencode cache found in ${opencode_plugin_cache_dir}" | tee -a "${out}/log.txt"
+    fi
+  else
+    echo "No opencode plugin cache dir ${opencode_plugin_cache_dir}" | tee -a "${out}/log.txt"
   fi
 
   echo "[6/7] Install/Upgrade" | tee -a "${out}/log.txt"
