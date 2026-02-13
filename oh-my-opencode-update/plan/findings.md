@@ -271,3 +271,159 @@ OMO_CACHE="${OPENCODE_CACHE_DIR}/oh-my-opencode"
 | 路径可移植性 | - | 已解决 ✅ | complete |
 | 脚本包管理器 | - | 已使用 npm ✅ | complete |
 
+---
+
+## Session: 2026-02-13 (缓存清理分析)
+
+### 分析目标
+
+分析 `scripts/oh_my_opencode_update.sh` 脚本中第 262-288 行的缓存清理部分，以及相关文档，确定需要修改的具体位置。
+
+### 当前脚本清理的缓存位置
+
+#### 位置 1: oh-my-opencode 缓存目录
+
+**路径**: `${OPENCODE_CACHE_DIR}/oh-my-opencode`
+- **默认值**: `${HOME}/.cache/oh-my-opencode`
+- **脚本行号**: 第 246-260 行
+- **清理方式**: 单个目录清理，需要用户交互确认
+
+**代码片段**:
+```bash
+echo "[5/7] Cache cleanup (optional)" | tee -a "${out}/log.txt"
+if [ -d "${OMO_CACHE}" ]; then
+  echo "Found cache dir: ${OMO_CACHE}" | tee -a "${out}/log.txt"
+  if [ ${DRY_RUN} -eq 1 ]; then
+    echo "DRY: rm -rf ${OMO_CACHE} (would ask confirmation)" | tee -a "${out}/log.txt"
+  else
+    if confirm "Delete cache dir ${OMO_CACHE}?"; then
+      rm -rf "${OMO_CACHE}"
+      echo "Deleted ${OMO_CACHE}" | tee -a "${out}/log.txt"
+    else
+      echo "Skipped deleting ${OMO_CACHE}" | tee -a "${out}/log.txt"
+    fi
+  fi
+fi
+```
+
+---
+
+#### 位置 2: opencode 插件缓存目录
+
+**路径**: `${OPENCODE_CACHE_DIR}/opencode/node_modules/oh-my-opencode*`
+- **默认值**: `${HOME}/.cache/opencode/node_modules/oh-my-opencode*`
+- **脚本行号**: 第 262-288 行
+- **清理方式**: 使用 glob 模式 `oh-my-opencode*` 匹配所有相关缓存，需要用户交互确认
+
+**代码片段**:
+```bash
+# Clean opencode plugin cache (where version info is read from)
+# Use glob pattern to clean all oh-my-opencode related caches
+local opencode_plugin_cache_dir="${OPENCODE_CACHE_DIR}/opencode/node_modules"
+if [ -d "${opencode_plugin_cache_dir}" ]; then
+  local found_cache=0
+  for cache_path in "${opencode_plugin_cache_dir}"/oh-my-opencode*; do
+    if [ -e "${cache_path}" ]; then
+      found_cache=1
+      echo "Found opencode plugin cache: ${cache_path}" | tee -a "${out}/log.txt}"
+      if [ ${DRY_RUN} -eq 1 ]; then
+        echo "DRY: rm -rf ${cache_path} (would ask confirmation)" | tee -a "${out}/log.txt"
+      else
+        if confirm "Delete opencode plugin cache ${cache_path}?"; then
+          rm -rf "${cache_path}"
+          echo "Deleted ${cache_path}" | tee -a "${out}/log.txt"
+        else
+          echo "Skipped deleting ${cache_path}" | tee -a "${out}/log.txt"
+        fi
+      fi
+    fi
+  done
+  if [ ${found_cache} -eq 0 ]; then
+    echo "No oh-my-opencode cache found in ${opencode_plugin_cache_dir}" | tee -a "${out}/log.txt"
+  fi
+fi
+```
+
+---
+
+### 相关文档分析
+
+#### SKILL.md
+
+**提及缓存清理的位置**:
+
+| 行号 | 内容摘要 |
+|------|---------|
+| 第 25 行 | `[5/7] Cache cleanup (optional)` - 执行流程表格中说明此步骤 |
+| 第 56 行 | `~/.cache/oh-my-opencode` - 缓存目录说明 |
+| 第 57 行 | `~/.cache/opencode/node_modules/oh-my-opencode*` - opencode 插件缓存 |
+
+**执行流程表格**:
+
+| 步骤 | 名称 | 说明 |
+|------|------|------|
+| [5/7] | Cache cleanup (optional) | 可选的缓存清理（需确认），包括 ~/.cache/oh-my-opencode 和 ~/.cache/opencode/node_modules/oh-my-opencode* |
+
+#### references/paths_config.md
+
+**提及缓存清理的位置**:
+
+| 行号 | 内容摘要 |
+|------|---------|
+| 第 19-29 行 | `OPENCODE_CACHE_DIR` 环境变量说明 |
+| 第 197-204 行 | "缓存清理失败"故障排查章节 |
+
+---
+
+### 文档与脚本一致性验证
+
+| 验证项 | 文档说明 | 脚本实现 | 一致性 |
+|--------|---------|---------|--------|
+| 缓存目录 | `~/.cache/oh-my-opencode` | `${OPENCODE_CACHE_DIR}/oh-my-opencode` | ✅ 一致 |
+| 插件缓存 | `~/.cache/opencode/node_modules/oh-my-opencode*` | glob 模式匹配 | ✅ 一致 |
+| 交互确认 | 需确认 | `confirm()` 函数 | ✅ 一致 |
+| 步骤编号 | [5/7] | `[5/7] Cache cleanup (optional)` | ✅ 一致 |
+
+---
+
+### 可能遗漏的缓存位置分析
+
+| 缓存类型 | 位置 | 清理状态 | 原因 |
+|---------|------|---------|------|
+| oh-my-opencode 主缓存 | `${OPENCODE_CACHE_DIR}/oh-my-opencode` | ✅ 已清理 | - |
+| opencode 插件缓存 | `${OPENCODE_CACHE_DIR}/opencode/node_modules/oh-my-opencode*` | ✅ 已清理 | - |
+| npm 全局缓存 | `~/.npm` | ❌ 未清理 | 全局共享，不应每次升级都清理 |
+| 配置目录 node_modules | `${OPENCODE_CONFIG_DIR}/node_modules` | ❌ 未清理 | npm uninstall 会清理，这是安装位置 |
+
+**结论**: 无明显遗漏，当前实现已考虑所有需要清理的缓存位置。
+
+---
+
+### 设计优点
+
+1. **使用 glob 模式**: `oh-my-opencode*` 可以匹配不同版本的缓存
+2. **交互确认**: 每个缓存删除都需要用户确认，安全可靠
+3. **dry-run 支持**: 可以预览将要删除的内容
+4. **日志记录**: 所有操作都会记录到日志文件
+
+---
+
+### 潜在改进建议（非必需）
+
+1. **添加缓存大小显示**: 在删除前显示缓存大小，帮助用户决策
+2. **添加"全部确认"选项**: 避免多次确认，提高效率
+
+---
+
+### 分析结论
+
+✅ **文档与脚本完全一致** - 无需修改
+
+1. 当前脚本清理的缓存位置正确
+2. 文档与脚本实现完全一致
+3. 无明显遗漏的缓存位置
+4. 设计合理，安全可靠
+
+---
+
+*Last updated: 2026-02-13*

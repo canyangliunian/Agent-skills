@@ -9,7 +9,7 @@ description: Use when upgrading, reinstalling, or troubleshooting the oh-my-open
 
 ## 核心目标
 - **默认升级到最新版本（latest）**，并支持 **指定版本（pinned version）**。
-- 先检查环境（npm/node/权限），再备份，再温和卸载，再清理缓存（删除前交互确认），最后安装并验证。
+- 先检查环境（npm/node/权限），再备份，再温和卸载，再清理缓存和依赖（删除前交互确认），最后安装并验证。
 - 关键步骤失败：**立刻停止**。例外：温和卸载失败只记录 WARN 并继续；`doctor` 失败不阻塞。
 
 ## 执行流程
@@ -22,7 +22,7 @@ description: Use when upgrading, reinstalling, or troubleshooting the oh-my-open
 | [2/7] | Baseline | 记录当前环境信息 |
 | [3/7] | Backup configs | 备份 opencode.json 和 oh-my-opencode.json |
 | [4/7] | Uninstall (gentle) | 温和卸载旧版本（失败仅 WARN 并继续） |
-| [5/7] | Cache cleanup (optional) | 可选的缓存清理（需确认），包括 ~/.cache/oh-my-opencode 和 ~/.cache/opencode/node_modules/oh-my-opencode* |
+| [5/7] | Cache cleanup (optional) | 可选的缓存清理（需确认），包括 ~/.cache/oh-my-opencode、~/.cache/opencode/node_modules/oh-my-opencode* 和 ~/.cache/opencode/package.json 中的 oh-my-opencode 依赖 |
 | [6/7] | Install/Upgrade | 安装新版本（支持超时回退） |
 | [7/7] | Verify | 验证安装结果（doctor 失败不阻塞） |
 
@@ -54,6 +54,7 @@ description: Use when upgrading, reinstalling, or troubleshooting the oh-my-open
 - oh-my-opencode 配置：`~/.config/opencode/oh-my-opencode.json`
 - 缓存目录：`~/.cache/oh-my-opencode`
 - opencode 插件缓存（版本信息读取位置）：`~/.cache/opencode/node_modules/oh-my-opencode*`
+- opencode package.json（依赖配置）：`~/.cache/opencode/package.json`
 
 ### 自定义路径（可选）
 ```bash

@@ -287,6 +287,36 @@ main() {
     echo "No opencode plugin cache dir ${opencode_plugin_cache_dir}" | tee -a "${out}/log.txt"
   fi
 
+  # Clean opencode package.json dependencies
+  local opencode_pkg_json="${OPENCODE_CACHE_DIR}/opencode/package.json"
+  if [ -f "${opencode_pkg_json}" ]; then
+    echo "Found opencode package.json: ${opencode_pkg_json}" | tee -a "${out}/log.txt"
+
+    # Check if oh-my-opencode dependency exists
+    local has_omo=""
+    has_omo=$(node -e "const pkg=require('${opencode_pkg_json}'); console.log(!!pkg.dependencies?.['oh-my-opencode'])" 2>/dev/null || echo "false")
+
+    if [ "${has_omo}" = "true" ]; then
+      echo "Found oh-my-opencode dependency in opencode package.json" | tee -a "${out}/log.txt"
+
+      if [ ${DRY_RUN} -eq 1 ]; then
+        echo "DRY: would delete oh-my-opencode dependency from ${opencode_pkg_json}" | tee -a "${out}/log.txt"
+        echo "      Command: node -e \"const p=require('${opencode_pkg_json}'); delete p.dependencies['oh-my-opencode']; require('fs').writeFileSync('${opencode_pkg_json}', JSON.stringify(p, null, 2))\"" | tee -a "${out}/log.txt"
+      else
+        if confirm "Delete oh-my-opencode dependency from ${opencode_pkg_json}?"; then
+          node -e "const p=require('${opencode_pkg_json}'); delete p.dependencies['oh-my-opencode']; require('fs').writeFileSync('${opencode_pkg_json}', JSON.stringify(p, null, 2))" | tee -a "${out}/log.txt"
+          echo "Deleted oh-my-opencode dependency from ${opencode_pkg_json}" | tee -a "${out}/log.txt"
+        else
+          echo "Skipped deleting oh-my-opencode dependency from ${opencode_pkg_json}" | tee -a "${out}/log.txt"
+        fi
+      fi
+    else
+      echo "No oh-my-opencode dependency found in ${opencode_pkg_json}" | tee -a "${out}/log.txt"
+    fi
+  else
+    echo "No opencode package.json: ${opencode_pkg_json}" | tee -a "${out}/log.txt"
+  fi
+
   echo "[6/7] Install/Upgrade" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: (cd ${CONFIG_DIR} && npm install ${pkg} --save-exact)" | tee -a "${out}/log.txt"
