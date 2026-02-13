@@ -25,7 +25,6 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-from typing import List
 
 
 ANSI_RESET = "\x1b[0m"
@@ -63,7 +62,7 @@ class ColorHelpFormatter(argparse.HelpFormatter):
             return text
 
         parts = text.split()
-        out: List[str] = []
+        out: list[str] = []
         for p in parts:
             if p.startswith("-"):
                 out.append(colorize(p, ANSI_CYAN_BOLD))
@@ -90,9 +89,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
 def main() -> int:
     ap = build_arg_parser()
     args = ap.parse_args()
-    print(f"title={args.title}")
-    print(f"mode={args.mode}")
-    print(f"topk={args.topk}")
+    print(colorize(f"title={args.title}", ANSI_CYAN_BOLD))
+    print(colorize(f"mode={args.mode}", ANSI_YELLOW_BOLD))
+    print(colorize(f"topk={args.topk}", ANSI_YELLOW_BOLD))
     return 0
 
 
