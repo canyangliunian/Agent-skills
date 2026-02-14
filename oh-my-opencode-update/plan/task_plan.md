@@ -34,6 +34,16 @@ Phase 6: 审核完成 (complete)
 - [x] 完成所有任务
 - **Status:** complete
 
+### Phase 7: Bun 迁移（完成）
+- [x] 将包管理器从 npm 切换到 bunx
+- [x] 简化流程为 4 步
+- [x] 添加 --force-cleanup 选项
+- [x] 添加订阅参数支持 (--claude, --gemini, --copilot)
+- [x] 更新所有文档
+- [x] 修复参数解析支持带等号格式
+- [x] 测试验证通过
+- **Status:** complete
+
 ## Team Members
 
 | 成员 | Agent Type | 职责 | 状态 |
