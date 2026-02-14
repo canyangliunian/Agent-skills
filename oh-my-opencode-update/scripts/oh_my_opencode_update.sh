@@ -301,62 +301,46 @@ main() {
     echo "No opencode package.json: ${opencode_pkg_json}" | tee -a "${out}/log.txt"
   fi
 
-  echo "[4/4] Install/Upgrade & Verify" | tee -a "${out}/log.txt"
+  echo "[4/4] Install/Upgrade via official installer" | tee -a "${out}/log.txt"
+  local install_cmd="bunx ${pkg} install --no-tui"
+
   if [ ${DRY_RUN} -eq 1 ]; then
-    echo "DRY: (cd ${CONFIG_DIR} && npm install ${pkg} --save-exact)" | tee -a "${out}/log.txt"
-    echo "DRY: fallback with --save-exact --ignore-scripts if postinstall hangs" | tee -a "${out}/log.txt"
+    echo "DRY: ${install_cmd}" | tee -a "${out}/log.txt"
   else
-    local install_success=0
+    set +e
     local install_output=""
+    local install_rc=0
 
-    # Try normal install first (with optional timeout)
-    echo "Attempting npm install (timeout: ${NPM_INSTALL_TIMEOUT}s)..." | tee -a "${out}/log.txt"
-    if [ -n "${TIMEOUT_CMD}" ] && [ "${NPM_INSTALL_TIMEOUT}" -gt 0 ]; then
-      install_output=$(${TIMEOUT_CMD} "${NPM_INSTALL_TIMEOUT}" npm install "${pkg}" --save-exact --prefix "${CONFIG_DIR}" 2>&1) && install_success=1 || install_success=0
-      echo "${install_output}" | tee -a "${out}/log.txt"
-    else
-      install_output=$( (cd "${CONFIG_DIR}" && npm install "${pkg}" --save-exact) 2>&1 ) && install_success=1 || install_success=0
-      echo "${install_output}" | tee -a "${out}/log.txt"
-    fi
-
-    # If failed or timed out, try with --ignore-scripts
-    if [ ${install_success} -eq 0 ]; then
-      echo "WARN: npm install failed or timed out. Trying with --ignore-scripts..." | tee -a "${out}/log.txt"
-      set +e
-      (cd "${CONFIG_DIR}" && npm install "${pkg}" --save-exact --ignore-scripts) 2>&1 | tee -a "${out}/log.txt"
-      local ignore_scripts_rc=${PIPESTATUS[0]}
-      set -e
-
-      if [ ${ignore_scripts_rc} -ne 0 ]; then
-        echo "ERROR: npm install failed even with --ignore-scripts (rc=${ignore_scripts_rc}). Possible causes:" | tee -a "${out}/log.txt"
-        echo "  1. Network issue - check internet connection" | tee -a "${out}/log.txt"
-        echo "     Test: curl -I https://registry.npmjs.org/" | tee -a "${out}/log.txt"
-        echo "  2. Permission issue - check directory permissions" | tee -a "${out}/log.txt"
-        echo "     Check: ls -ld ${CONFIG_DIR}" | tee -a "${out}/log.txt"
-        echo "  3. Registry issue - try using official registry:" | tee -a "${out}/log.txt"
-        echo "     Fix: npm config set registry https://registry.npmjs.org/" | tee -a "${out}/log.txt"
-        echo "  4. Disk space issue - check available space" | tee -a "${out}/log.txt"
-        echo "     Check: df -h ${CONFIG_DIR}" | tee -a "${out}/log.txt"
-        exit 20
+    # Execute with optional timeout
+    if [ "${BUN_INSTALL_TIMEOUT}" -gt 0 ]; then
+      if command -v timeout &> /dev/null; then
+        install_output=$(timeout "${BUN_INSTALL_TIMEOUT}" ${install_cmd} 2>&1) && install_rc=0 || install_rc=$?
+      elif command -v gtimeout &> /dev/null; then
+        install_output=$(gtimeout "${BUN_INSTALL_TIMEOUT}" ${install_cmd} 2>&1) && install_rc=0 || install_rc=$?
+      else
+        # No timeout available, run without timeout
+        install_output=$(${install_cmd} 2>&1) && install_rc=0 || install_rc=$?
       fi
-
-      echo "INFO: Installation succeeded with --ignore-scripts" | tee -a "${out}/log.txt"
-      echo "NOTE: Some optional dependencies may not be fully configured." | tee -a "${out}/log.txt"
+    else
+      install_output=$(${install_cmd} 2>&1) && install_rc=0 || install_rc=$?
     fi
-  fi
+    set -e
 
-  # Verify installation
-  if [ ${DRY_RUN} -eq 1 ]; then
-    echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode --version" | tee -a "${out}/log.txt"
-    echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode doctor" | tee -a "${out}/log.txt"
-  else
-    (cd "${CONFIG_DIR}" && node node_modules/.bin/oh-my-opencode --version) | tee -a "${out}/log.txt"
-    (cd "${CONFIG_DIR}" && node node_modules/.bin/oh-my-opencode doctor) | tee -a "${out}/log.txt" || true
+    echo "${install_output}" | tee -a "${out}/log.txt"
 
-    # Optional: record the resolved version from installed package.json
-    if [ -f "${CONFIG_DIR}/node_modules/oh-my-opencode/package.json" ]; then
-      node -e "const p=require('${CONFIG_DIR}/node_modules/oh-my-opencode/package.json'); console.log('resolved_version', p.version)" | tee -a "${out}/log.txt" || true
+    if [ ${install_rc} -ne 0 ]; then
+      echo "ERROR: bunx install failed (rc=${install_rc})." | tee -a "${out}/log.txt"
+      echo "  Possible causes:" | tee -a "${out}/log.txt"
+      echo "  1. Network issue - check internet connection" | tee -a "${out}/log.txt"
+      echo "     Test: curl -I https://registry.npmjs.org/" | tee -a "${out}/log.txt"
+      echo "  2. Bun/bunx issue - check installation" | tee -a "${out}/log.txt"
+      echo "     Test: bunx --version" | tee -a "${out}/log.txt"
+      echo "  3. Version not found - verify target version" | tee -a "${out}/log.txt"
+      echo "     Test: bun pm ls oh-my-opencode" | tee -a "${out}/log.txt"
+      exit 2
     fi
+
+    echo "INFO: Installation completed successfully." | tee -a "${out}/log.txt"
   fi
 
   echo "Done. Logs: ${out}" | tee -a "${out}/log.txt"
