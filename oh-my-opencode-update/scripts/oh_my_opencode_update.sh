@@ -131,15 +131,30 @@ main() {
         FORCE_CLEANUP=1
         shift
         ;;
+      --claude=*)
+        CLAUDE="${1#*=}"
+        shift
+        ;;
+      --gemini=*)
+        GEMINI="${1#*=}"
+        shift
+        ;;
+      --copilot=*)
+        COPILOT="${1#*=}"
+        shift
+        ;;
       --claude)
+        # Fallback for space-separated value: --claude yes
         CLAUDE="$2"
         shift 2
         ;;
       --gemini)
+        # Fallback for space-separated value: --gemini yes
         GEMINI="$2"
         shift 2
         ;;
       --copilot)
+        # Fallback for space-separated value: --copilot yes
         COPILOT="$2"
         shift 2
         ;;
