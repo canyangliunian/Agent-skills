@@ -77,12 +77,12 @@ bash scripts/oh_my_opencode_update.sh --dry-run --latest
 
 ### 2) 实际执行：升级到 latest
 ```bash
-bash scripts/oh_my_opencode_update.sh --apply --latest
+bash scripts/oh_my_opencode_update.sh --apply --latest --claude yes --gemini no --copilot no
 ```
 
 ### 3) 实际执行：升级到指定版本
 ```bash
-bash scripts/oh_my_opencode_update.sh --apply --target-version 3.2.2
+bash scripts/oh_my_opencode_update.sh --apply --target-version 3.2.2 --claude max20 --gemini yes --copilot no
 ```
 
 ### 可选参数
@@ -94,11 +94,13 @@ bash scripts/oh_my_opencode_update.sh --apply --target-version 3.2.2
 | `--apply` | 实际执行升级操作 |
 | `--latest` | 升级到最新版本 |
 | `--target-version <version>` | 升级到指定版本 |
-
-## 验收（必须做）
+| `--claude <value>` | Claude 订阅：no, yes, max20（至少提供一个） |
+| `--gemini <value>` | Gemini 集成：no, yes（至少提供一个） |
+| `--copilot <value>` | GitHub Copilot 订阅：no, yes（至少提供一个） |
+## 验收（bunx 安装后）
 ```bash
-(cd "${OPENCODE_CONFIG_DIR}" && node node_modules/.bin/oh-my-opencode --version)
-(cd "${OPENCODE_CONFIG_DIR}" && node node_modules/.bin/oh-my-opencode doctor)
+(bunx oh-my-opencode@latest install --no-tui --claude yes --gemini no --copilot no
+(bunx oh-my-opencode@latest install --no-tui --claude yes --gemini no --copilot no (cd "${OPENCODE_CONFIG_DIR}" && node node_modules/.bin/oh-my-opencode doctor)(cd "${OPENCODE_CONFIG_DIR}" && node node_modules/.bin/oh-my-opencode doctor) opencode doctor)
 ```
 
 ## 常见问题
