@@ -21,6 +21,9 @@ SKILL_ROOT=$(cd "${SCRIPT_DIR}/.." && pwd)
 : "${OPENCODE_CACHE_DIR:=${HOME}/.cache}"
 : "${OPENCODE_BIN:=${HOME}/.opencode/bin/opencode}"
 
+# timeout for bunx install (in seconds), 0 = no timeout
+: "${BUN_INSTALL_TIMEOUT:=300}"
+
 # 核心路径
 CONFIG_DIR="${OPENCODE_CONFIG_DIR}"
 OPENCODE_JSON="${CONFIG_DIR}/opencode.json"
@@ -66,17 +69,6 @@ confirm() {
     *) return 1 ;;
   esac
 }
-
-# timeout for npm install (in seconds), 0 = no timeout
-: "${NPM_INSTALL_TIMEOUT:=120}"
-
-# Check if timeout command is available
-TIMEOUT_CMD=""
-if command -v timeout &> /dev/null; then
-  TIMEOUT_CMD="timeout"
-elif command -v gtimeout &> /dev/null; then
-  TIMEOUT_CMD="gtimeout"  # macOS with coreutils
-fi
 
 # SHA256 checksum command (cross-platform)
 SHA256_CMD=""
