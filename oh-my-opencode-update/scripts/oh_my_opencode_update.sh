@@ -143,24 +143,16 @@ main() {
 
   echo "[oh-my-opencode-update] mode=${MODE} target=${TARGET} logdir=${out}"
 
-  # [1/7] Prerequisites check
-  echo "[1/7] Prerequisites check" | tee -a "${out}/log.txt"
+  # [1/4] Prerequisites check
+  echo "[1/4] Prerequisites check" | tee -a "${out}/log.txt"
 
-  # Check npm
-  if ! command -v npm &> /dev/null; then
-    echo "ERROR: npm not found. Please install Node.js and npm first." | tee -a "${out}/log.txt"
-    echo "  Download: https://nodejs.org/" | tee -a "${out}/log.txt"
+  # Check bun
+  if ! command -v bun &> /dev/null; then
+    echo "ERROR: bun not found. Please install bun first." | tee -a "${out}/log.txt"
+    echo "  Install: curl -fsSL https://bun.sh/install | bash" | tee -a "${out}/log.txt"
     exit 1
   fi
-  echo "npm: $(npm --version)" | tee -a "${out}/log.txt"
-
-  # Check node
-  if ! command -v node &> /dev/null; then
-    echo "ERROR: node not found. Please install Node.js first." | tee -a "${out}/log.txt"
-    echo "  Download: https://nodejs.org/" | tee -a "${out}/log.txt"
-    exit 1
-  fi
-  echo "node: $(node --version)" | tee -a "${out}/log.txt"
+  echo "bun: $(bun --version)" | tee -a "${out}/log.txt"
 
   # Ensure config directory exists and is writable
   if [ ! -d "${CONFIG_DIR}" ]; then
@@ -183,7 +175,7 @@ main() {
     exit 1
   fi
 
-  echo "[2/7] Baseline" | tee -a "${out}/log.txt"
+  echo "[2/4] Baseline" | tee -a "${out}/log.txt"
   echo "OPENCODE_BIN: ${OPENCODE_BIN}" | tee -a "${out}/log.txt"
 
   local opencode_cmd=""
@@ -206,7 +198,7 @@ main() {
     echo "WARN: opencode command not found. Set OPENCODE_BIN or add opencode to PATH." | tee -a "${out}/log.txt"
   fi
 
-  echo "[3/7] Backup configs" | tee -a "${out}/log.txt"
+  echo "[3/4] Backup configs" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: cp -a ${OPENCODE_JSON} ${out}/opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
     echo "DRY: cp -a ${OMO_JSON} ${out}/oh-my-opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
@@ -361,7 +353,7 @@ main() {
     fi
   fi
 
-  echo "[7/7] Verify" | tee -a "${out}/log.txt"
+  echo "[4/4] Verify" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode --version" | tee -a "${out}/log.txt"
     echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode doctor" | tee -a "${out}/log.txt"
