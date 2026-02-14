@@ -81,7 +81,7 @@ else
 fi
 
 resolve_target_pkg() {
-  # produce npm install argument
+  # produce bunx install command argument
   if [ "${TARGET}" = "latest" ]; then
     echo "oh-my-opencode@latest"
   else
