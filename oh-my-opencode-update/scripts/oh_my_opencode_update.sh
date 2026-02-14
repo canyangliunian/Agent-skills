@@ -4,6 +4,7 @@ set -euo pipefail
 # oh-my-opencode-update
 # - 默认升级到 latest
 # - 也支持指定版本（例如 3.2.2）
+# - 使用官方推荐的 bunx 安装器
 # - 温和策略：任何关键步骤失败立刻停止（不自动扩大破坏范围）
 
 MODE=""
