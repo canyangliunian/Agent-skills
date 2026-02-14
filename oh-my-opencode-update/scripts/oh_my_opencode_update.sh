@@ -343,6 +343,43 @@ main() {
     echo "INFO: Installation completed successfully." | tee -a "${out}/log.txt"
   fi
 
+  echo "[4/4] Verify installation" | tee -a "${out}/log.txt"
+
+  if [ ${DRY_RUN} -eq 1 ]; then
+    echo "DRY: grep -q 'oh-my-opencode' ${OPENCODE_JSON}" | tee -a "${out}/log.txt"
+    echo "DRY: test -f ${OMO_JSON}" | tee -a "${out}/log.txt"
+  else
+    local verify_rc=0
+
+    # Check plugin registration
+    if [ -f "${OPENCODE_JSON}" ]; then
+      if grep -q '"oh-my-opencode"' "${OPENCODE_JSON}" 2>/dev/null; then
+        echo "[OK] Plugin registered in opencode.json" | tee -a "${out}/log.txt"
+      else
+        echo "[WARN] Plugin not found in opencode.json" | tee -a "${out}/log.txt"
+        verify_rc=1
+      fi
+    else
+      echo "[WARN] opencode.json not found: ${OPENCODE_JSON}" | tee -a "${out}/log.txt"
+      verify_rc=1
+    fi
+
+    # Check config file existence
+    if [ -f "${OMO_JSON}" ]; then
+      echo "[OK] Config file exists: ${OMO_JSON}" | tee -a "${out}/log.txt"
+    else
+      echo "[WARN] Config file not found: ${OMO_JSON}" | tee -a "${out}/log.txt"
+    fi
+
+    # Optional: run opencode doctor (non-blocking)
+    if command -v opencode &> /dev/null; then
+      echo "Running opencode doctor..." | tee -a "${out}/log.txt"
+      opencode doctor 2>&1 | tee -a "${out}/log.txt" || echo "[WARN] opencode doctor had issues" | tee -a "${out}/log.txt"
+    fi
+
+    exit ${verify_rc}
+  fi
+
   echo "Done. Logs: ${out}" | tee -a "${out}/log.txt"
 }
 
