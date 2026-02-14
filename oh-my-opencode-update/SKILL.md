@@ -9,33 +9,32 @@ description: Use when upgrading, reinstalling, or troubleshooting the oh-my-open
 
 ## 核心目标
 - **默认升级到最新版本（latest）**，并支持 **指定版本（pinned version）**。
-- 先检查环境（npm/node/权限），再备份，再温和卸载，再清理缓存和依赖（删除前交互确认），最后安装并验证。
-- 关键步骤失败：**立刻停止**。例外：温和卸载失败只记录 WARN 并继续；`doctor` 失败不阻塞。
+- 先检查环境（bun/权限），再备份，再清理缓存（可选，删除前交互确认），最后使用官方安装器安装并验证。
+- 关键步骤失败：**立刻停止**。例外：`--force-cleanup` 时不询问直接清理；`doctor` 失败不阻塞。
 
 ## 执行流程
 
-脚本按以下顺序执行（共 7 步）：
+脚本按以下顺序执行（共 4 步）：
 
 | 步骤 | 名称 | 说明 |
 |------|------|------|
-| [1/7] | Prerequisites check | 检查 npm、node 版本及配置目录权限（必要时自动创建配置目录） |
-| [2/7] | Baseline | 记录当前环境信息 |
-| [3/7] | Backup configs | 备份 opencode.json 和 oh-my-opencode.json |
-| [4/7] | Uninstall (gentle) | 温和卸载旧版本（失败仅 WARN 并继续） |
-| [5/7] | Cache cleanup (optional) | 可选的缓存清理（需确认），包括 ~/.cache/oh-my-opencode、~/.cache/opencode/node_modules/oh-my-opencode* 和 ~/.cache/opencode/package.json 中的 oh-my-opencode 依赖 |
-| [6/7] | Install/Upgrade | 安装新版本（支持超时回退） |
-| [7/7] | Verify | 验证安装结果（doctor 失败不阻塞） |
+| [1/4] | Prerequisites check | 检查 bun 版本及配置目录权限 |
+| [2/4] | Baseline | 记录当前环境信息 |
+| [3/4] | Backup + Cache cleanup | 备份配置文件并清理缓存 |
+| [4/4] | Install/Upgrade | 使用官方安装器安装并验证 |
 
-### [6/7] Install/Upgrade 详解
+### [4/4] Install/Upgrade 详解
 
-安装过程采用双重策略：
+安装过程使用官方推荐的 `bunx` 安装器：
 
-1. **首次尝试**：正常 `npm install --save-exact`（在 `timeout`/`gtimeout` 可用时带超时保护）
-2. **自动回退**：若失败或超时，自动使用 `--save-exact --ignore-scripts` 重试
+```bash
+bunx oh-my-opencode@<version> install --no-tui
+```
 
 **关键特性**：
-- `--save-exact`：确保安装精确版本，避免 npm 自动添加 `^` 导致版本升级
-- 超时保护（在 `timeout`/`gtimeout` 可用时）：防止 `postinstall` 脚本卡住
+- `--no-tui`：非交互式模式，适合脚本自动化
+- 官方安装器处理：插件注册、配置、认证步骤
+- `@<version>`：指定版本，`@latest` 表示最新版
 
 ## 适用环境（可通过环境变量自定义）
 
@@ -44,10 +43,10 @@ description: Use when upgrading, reinstalling, or troubleshooting the oh-my-open
 
 | 环境变量 | 默认值 | 说明 |
 |---------|--------|------|
-| `OPENCODE_CONFIG_DIR` | `${HOME}/.config/opencode` | opencode 配置目录（oh-my-opencode 安装位置） |
+| `OPENCODE_CONFIG_DIR` | `${HOME}/.config/opencode` | opencode 配置目录 |
 | `OPENCODE_CACHE_DIR` | `${HOME}/.cache` | 缓存目录根目录 |
-| `OPENCODE_BIN` | `${HOME}/.opencode/bin/opencode` | opencode 二进制文件路径（优先使用可执行文件，否则回退 PATH） |
-| `NPM_INSTALL_TIMEOUT` | `120` | npm install 超时时间（秒），`0` 表示无超时 |
+| `OPENCODE_BIN` | `${HOME}/.opencode/bin/opencode` | opencode 二进制文件路径 |
+| `BUN_INSTALL_TIMEOUT` | `300` | bunx 安装超时时间（秒），0 表示无超时 |
 
 ### 配置文件
 - opencode 配置：`~/.config/opencode/opencode.json` （环境变量：`OPENCODE_CONFIG_DIR`）
@@ -86,6 +85,16 @@ bash scripts/oh_my_opencode_update.sh --apply --latest
 bash scripts/oh_my_opencode_update.sh --apply --target-version 3.2.2
 ```
 
+### 可选参数
+
+| 参数 | 说明 |
+|------|------|
+| `--force-cleanup` | 强制清理缓存，不询问确认 |
+| `--dry-run` | 仅显示将要执行的操作，不实际执行 |
+| `--apply` | 实际执行升级操作 |
+| `--latest` | 升级到最新版本 |
+| `--target-version <version>` | 升级到指定版本 |
+
 ## 验收（必须做）
 ```bash
 (cd "${OPENCODE_CONFIG_DIR}" && node node_modules/.bin/oh-my-opencode --version)
@@ -95,54 +104,18 @@ bash scripts/oh_my_opencode_update.sh --apply --target-version 3.2.2
 ## 常见问题
 
 ### 前置检查失败
-- **npm 或 node 未安装**
-  - 安装 Node.js：https://nodejs.org/
+- **bun 未安装**
+  - 安装 bun：`curl -fsSL https://bun.sh/install | bash`
 - **配置目录无写权限**
   - 检查权限：`ls -ld "${OPENCODE_CONFIG_DIR}"`
   - 修复权限：`chmod u+w "${OPENCODE_CONFIG_DIR}"`
 
-### npm 相关问题
-- **npm install 失败**
-  - 脚本会自动输出诊断建议，常见原因：
-    1. 网络问题 - 检查网络连接
-    2. 权限问题 - 检查目录权限
-    3. Registry 问题 - 尝试官方 registry
-    4. 磁盘空间不足
-- **npm uninstall 失败**
-  - 可能是包未安装（首次安装时正常）
-  - 可能是权限或 lock 文件问题，按脚本提示修复
-  - 脚本会继续进入安装步骤（gentle）
-- **postinstall 脚本卡住**
-  - 脚本会自动处理：超时后使用 `--ignore-scripts` 重试
-  - 可通过 `NPM_INSTALL_TIMEOUT` 调整超时时间
-  - macOS 用户需安装 coreutils：`brew install coreutils`（提供 `gtimeout`）
+### bunx 相关问题
+- **bunx 执行失败**
+  - 检查网络：`curl -I https://registry.npmjs.org/`
+  - 检查 bunx：`bunx --version`
+  - 验证版本：`bun pm ls oh-my-opencode`
 
 ### 历史说明
-- 本 skill 早期版本使用 `bun` 作为包管理器，现已切换到 `npm` 以提高兼容性和稳定性
-
-### 版本控制方案
-
-**当前配置**：`~/.config/opencode/opencode.json` 中配置为 `oh-my-opencode@latest`
-
-| 配置方式 | 行为 |
-|---------|------|
-| `oh-my-opencode@latest` | opencode **启动时**从 npm registry 自动查询并下载最新版本 |
-| `oh-my-opencode@3.5.1` | 固定使用 3.5.1 版本，不自动更新 |
-
-**@latest 的问题**：
-- 无法控制更新时机（不确定何时检查更新）
-- 自动下载的版本缓存可能导致版本显示问题
-- 失去版本控制权（无法固定使用特定版本）
-
-**建议方案**（暂时未实施）：
-修改 `~/.config/opencode/opencode.json`，将 `oh-my-opencode@latest` 改为固定版本，如 `oh-my-opencode@3.5.1`。
-
-这样可以：
-- 完全控制使用的版本
-- 不会自动更新
-- 需要手动更新时才修改配置
-
-**相关文件**：
-- 配置文件：`~/.config/opencode/opencode.json`
-- 版本检查缓存：`~/.cache/opencode/node_modules/oh-my-opencode/package.json`
+- 本 skill 早期版本使用 `npm` 进行包管理，现已切换到 `bunx` 以与官方推荐方式保持一致。
 
