@@ -40,6 +40,35 @@ opencode 二进制文件的完整路径。
   export OPENCODE_BIN="/usr/local/bin/opencode"
   ```
 
+### BUN_INSTALL_TIMEOUT
+
+bun 安装器超时时间（秒）。
+
+- **默认值**: `300`
+- **说明**: 使用 `bunx` 安装 oh-my-opencode 时的最大等待时间。如果网络较慢或需要安装较长时间，可以适当增加此值。
+- **示例**:
+  ```bash
+  export BUN_INSTALL_TIMEOUT=600  # 10 分钟
+  ```
+
+## Bun 迁移说明
+
+本 skill 现在使用官方推荐的 `bunx` 安装器，不再需要本地 node_modules 管理。
+
+### 变化
+
+- **不再需要**：npm、node 检查
+- **新增要求**：bun 安装（`curl -fsSL https://bun.sh/install | bash`）
+- **新增环境变量**：`BUN_INSTALL_TIMEOUT`（默认 300 秒）
+- **新增选项**：`--force-cleanup`（跳过缓存清理确认）
+
+### 迁移优势
+
+1. **更快的安装速度**：bun 的包管理器比 npm 快数倍
+2. **自动处理依赖**：`bunx` 会自动下载并缓存 oh-my-opencode 及其依赖
+3. **简化环境**：无需本地 `node_modules/` 目录，减少磁盘占用
+4. **更好的兼容性**：bun 兼容 Node.js 生态，确保与 oh-my-opencode 完全兼容
+
 ## 持久化配置
 
 ### 方法 1: Shell 配置文件（推荐）
