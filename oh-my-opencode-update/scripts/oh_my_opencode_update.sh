@@ -8,6 +8,7 @@ set -euo pipefail
 
 MODE=""
 DRY_RUN=0
+FORCE_CLEANUP=0
 
 # target: "latest" or a semver string
 TARGET="latest"
@@ -34,18 +35,19 @@ OPENCODE_OMO_CACHE="${OPENCODE_CACHE_DIR}/opencode/node_modules/oh-my-opencode"
 usage() {
   cat <<'USAGE'
 Usage:
-  oh_my_opencode_update.sh --dry-run [--latest | --target-version X.Y.Z]
-  oh_my_opencode_update.sh --apply   [--latest | --target-version X.Y.Z]
+  oh_my_opencode_update.sh --dry-run [--latest | --target-version X.Y.Z] [--force-cleanup]
+  oh_my_opencode_update.sh --apply   [--latest | --target-version X.Y.Z] [--force-cleanup]
 
 Options:
   --dry-run                 Print planned actions only
-  --apply                   Perform actions (still asks before destructive deletes)
+  --apply                   Perform actions (still asks before destructive deletes unless --force-cleanup)
   --latest                  Upgrade to latest (default)
   --target-version X.Y.Z    Upgrade to a specific version
+  --force-cleanup           Skip confirmation for cache deletion
 
 Notes:
   - Any failure stops immediately (no auto escalation).
-  - Cache delete requires interactive confirmation.
+  - Cache delete requires interactive confirmation unless --force-cleanup is set.
 USAGE
 }
 
@@ -61,6 +63,13 @@ log_base_dir() {
 confirm() {
   local prompt="$1"
   local ans=""
+
+  # Skip confirmation if FORCE_CLEANUP is set
+  if [ ${FORCE_CLEANUP} -eq 1 ]; then
+    echo "[FORCE] ${prompt}" | tee -a "${out}/log.txt"
+    return 0
+  fi
+
   if ! read -r -p "${prompt} [y/N] " ans; then
     return 1
   fi
@@ -108,6 +117,10 @@ main() {
       --target-version)
         TARGET="$2"
         shift 2
+        ;;
+      --force-cleanup)
+        FORCE_CLEANUP=1
+        shift
         ;;
       -h|--help)
         usage
