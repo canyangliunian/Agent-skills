@@ -189,7 +189,7 @@ main() {
 
   # Check bun
   if ! command -v bun &> /dev/null; then
-    echo "ERROR: bun not found. Please install bun first." | tee -a "${out}/log.txt"
+    echo "[ERROR] bun not found. Please install bun first." | tee -a "${out}/log.txt"
     echo "  Install: curl -fsSL https://bun.sh/install | bash" | tee -a "${out}/log.txt"
     exit 1
   fi
@@ -197,12 +197,12 @@ main() {
 
   # Ensure config directory exists and is writable
   if [ ! -d "${CONFIG_DIR}" ]; then
-    echo "WARN: Config directory does not exist: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+    echo "[WARN] Config directory does not exist: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
     if [ ${DRY_RUN} -eq 1 ]; then
       echo "      DRY: would create it: mkdir -p ${CONFIG_DIR}" | tee -a "${out}/log.txt"
     else
       mkdir -p "${CONFIG_DIR}" || {
-        echo "ERROR: Failed to create config directory: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+        echo "[ERROR] Failed to create config directory: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
         exit 1
       }
       echo "Created config directory: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
@@ -210,7 +210,7 @@ main() {
   fi
 
   if [ -d "${CONFIG_DIR}" ] && [ ! -w "${CONFIG_DIR}" ]; then
-    echo "ERROR: Config directory is not writable: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
+    echo "[ERROR] Config directory is not writable: ${CONFIG_DIR}" | tee -a "${out}/log.txt"
     echo "  Check permissions: ls -ld ${CONFIG_DIR}" | tee -a "${out}/log.txt"
     echo "  Fix with: chmod u+w ${CONFIG_DIR}" | tee -a "${out}/log.txt"
     exit 1
@@ -235,7 +235,7 @@ main() {
     echo "opencode: ${opencode_cmd}" | tee -a "${out}/log.txt"
     "${opencode_cmd}" --version | tee -a "${out}/log.txt" || true
   else
-    echo "WARN: opencode command not found. Set OPENCODE_BIN or add opencode to PATH." | tee -a "${out}/log.txt"
+    echo "[WARN] opencode command not found. Set OPENCODE_BIN or add opencode to PATH." | tee -a "${out}/log.txt"
   fi
 
   echo "[2/4] Backup configs" | tee -a "${out}/log.txt"
@@ -247,14 +247,14 @@ main() {
       cp -a "${OPENCODE_JSON}" "${out}/opencode.json.${ts}.bak"
       ${SHA256_CMD} "${OPENCODE_JSON}" "${out}/opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
     else
-      echo "WARN: ${OPENCODE_JSON} not found, skipping backup" | tee -a "${out}/log.txt"
+      echo "[WARN] ${OPENCODE_JSON} not found, skipping backup" | tee -a "${out}/log.txt"
     fi
 
     if [ -f "${OMO_JSON}" ]; then
       cp -a "${OMO_JSON}" "${out}/oh-my-opencode.json.${ts}.bak"
       ${SHA256_CMD} "${OMO_JSON}" "${out}/oh-my-opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
     else
-      echo "WARN: ${OMO_JSON} not found, skipping backup" | tee -a "${out}/log.txt"
+      echo "[WARN] ${OMO_JSON} not found, skipping backup" | tee -a "${out}/log.txt"
     fi
   fi
 
@@ -274,7 +274,7 @@ main() {
       fi
     fi
   else
-    echo "No cache dir ${OMO_CACHE}" | tee -a "${out}/log.txt"
+    echo "[INFO] No cache dir ${OMO_CACHE}" | tee -a "${out}/log.txt"
   fi
 
   # Clean opencode plugin cache (where version info is read from)
@@ -301,10 +301,10 @@ main() {
       fi
     done
     if [ ${found_cache} -eq 0 ]; then
-      echo "No oh-my-opencode cache found in ${opencode_plugin_cache_dir}" | tee -a "${out}/log.txt"
+      echo "[INFO] No oh-my-opencode cache found in ${opencode_plugin_cache_dir}" | tee -a "${out}/log.txt"
     fi
   else
-    echo "No opencode plugin cache dir ${opencode_plugin_cache_dir}" | tee -a "${out}/log.txt"
+    echo "[INFO] No opencode plugin cache dir ${opencode_plugin_cache_dir}" | tee -a "${out}/log.txt"
   fi
 
   # Clean opencode package.json dependencies
@@ -331,17 +331,17 @@ main() {
         fi
       fi
     else
-      echo "No oh-my-opencode dependency found in ${opencode_pkg_json}" | tee -a "${out}/log.txt"
+      echo "[INFO] No oh-my-opencode dependency found in ${opencode_pkg_json}" | tee -a "${out}/log.txt"
     fi
   else
-    echo "No opencode package.json: ${opencode_pkg_json}" | tee -a "${out}/log.txt"
+    echo "[INFO] No opencode package.json: ${opencode_pkg_json}" | tee -a "${out}/log.txt"
   fi
 
   echo "[4/4] Install/Upgrade via official installer" | tee -a "${out}/log.txt"
 
   # Validate required subscription parameters
   if [ -z "${CLAUDE}" ] && [ -z "${GEMINI}" ] && [ -z "${COPILOT}" ]; then
-    echo "ERROR: At least one subscription option is required (--claude, --gemini, or --copilot)." | tee -a "${out}/log.txt"
+    echo "[ERROR] At least one subscription option is required (--claude, --gemini, or --copilot)." | tee -a "${out}/log.txt"
     echo "  Usage: bunx oh-my-opencode install --no-tui --claude=<no|yes|max20> --gemini=<no|yes> --copilot=<no|yes>" | tee -a "${out}/log.txt"
     exit 1
   fi
@@ -385,7 +385,7 @@ main() {
     echo "${install_output}" | tee -a "${out}/log.txt"
 
     if [ ${install_rc} -ne 0 ]; then
-      echo "ERROR: bunx install failed (rc=${install_rc})." | tee -a "${out}/log.txt"
+      echo "[ERROR] bunx install failed (rc=${install_rc})." | tee -a "${out}/log.txt"
       echo "  Possible causes:" | tee -a "${out}/log.txt"
       echo "  1. Network issue - check internet connection" | tee -a "${out}/log.txt"
       echo "     Test: curl -I https://registry.npmjs.org/" | tee -a "${out}/log.txt"
@@ -396,7 +396,7 @@ main() {
       exit 2
     fi
 
-    echo "INFO: Installation completed successfully." | tee -a "${out}/log.txt"
+    echo "[INFO] Installation completed successfully." | tee -a "${out}/log.txt"
   fi
 
   echo "[4/4] Verify installation" | tee -a "${out}/log.txt"
@@ -429,7 +429,7 @@ main() {
 
     # Optional: run opencode doctor (non-blocking)
     if command -v opencode &> /dev/null; then
-      echo "Running opencode doctor..." | tee -a "${out}/log.txt"
+      echo "[INFO] Running opencode doctor..." | tee -a "${out}/log.txt"
       opencode doctor 2>&1 | tee -a "${out}/log.txt" || echo "[WARN] opencode doctor had issues" | tee -a "${out}/log.txt"
     fi
 
