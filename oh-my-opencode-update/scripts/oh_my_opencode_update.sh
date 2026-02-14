@@ -14,6 +14,11 @@ FORCE_CLEANUP=0
 # target: "latest" or a semver string
 TARGET="latest"
 
+# Subscription parameters
+CLAUDE=""
+GEMINI=""
+COPILOT=""
+
 # 路径配置：获取脚本所在目录和 skill 根目录
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 SKILL_ROOT=$(cd "${SCRIPT_DIR}/.." && pwd)
@@ -36,8 +41,8 @@ OPENCODE_OMO_CACHE="${OPENCODE_CACHE_DIR}/opencode/node_modules/oh-my-opencode"
 usage() {
   cat <<'USAGE'
 Usage:
-  oh_my_opencode_update.sh --dry-run [--latest | --target-version X.Y.Z] [--force-cleanup]
-  oh_my_opencode_update.sh --apply   [--latest | --target-version X.Y.Z] [--force-cleanup]
+  oh_my_opencode_update.sh --dry-run [--latest | --target-version X.Y.Z] [--force-cleanup] --claude <value> --gemini <value> --copilot <value>
+  oh_my_opencode_update.sh --apply   [--latest | --target-version X.Y.Z] [--force-cleanup] --claude <value> --gemini <value> --copilot <value>
 
 Options:
   --dry-run                 Print planned actions only
@@ -45,6 +50,9 @@ Options:
   --latest                  Upgrade to latest (default)
   --target-version X.Y.Z    Upgrade to a specific version
   --force-cleanup           Skip confirmation for cache deletion
+  --claude <value>          Claude 订阅: no, yes, max20 (必需)
+  --gemini <value>          Gemini 集成: no, yes (必需)
+  --copilot <value>         GitHub Copilot 订阅: no, yes (必需)
 
 Notes:
   - Any failure stops immediately (no auto escalation).
@@ -122,6 +130,18 @@ main() {
       --force-cleanup)
         FORCE_CLEANUP=1
         shift
+        ;;
+      --claude)
+        CLAUDE="$2"
+        shift 2
+        ;;
+      --gemini)
+        GEMINI="$2"
+        shift 2
+        ;;
+      --copilot)
+        COPILOT="$2"
+        shift 2
         ;;
       -h|--help)
         usage
@@ -303,7 +323,27 @@ main() {
   fi
 
   echo "[4/4] Install/Upgrade via official installer" | tee -a "${out}/log.txt"
-  local install_cmd="bunx ${pkg} install --no-tui"
+
+  # Validate required subscription parameters
+  if [ -z "${CLAUDE}" ] && [ -z "${GEMINI}" ] && [ -z "${COPILOT}" ]; then
+    echo "ERROR: At least one subscription option is required (--claude, --gemini, or --copilot)." | tee -a "${out}/log.txt"
+    echo "  Usage: bunx oh-my-opencode install --no-tui --claude=<no|yes|max20> --gemini=<no|yes> --copilot=<no|yes>" | tee -a "${out}/log.txt"
+    exit 1
+  fi
+
+  # Build install command with subscription parameters
+  local install_args="--no-tui"
+  if [ -n "${CLAUDE}" ]; then
+    install_args="${install_args} --claude=${CLAUDE}"
+  fi
+  if [ -n "${GEMINI}" ]; then
+    install_args="${install_args} --gemini=${GEMINI}"
+  fi
+  if [ -n "${COPILOT}" ]; then
+    install_args="${install_args} --copilot=${COPILOT}"
+  fi
+
+  local install_cmd="bunx ${pkg} install ${install_args}"
 
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: ${install_cmd}" | tee -a "${out}/log.txt"
