@@ -135,8 +135,8 @@ main() {
 
   echo "[oh-my-opencode-update] mode=${MODE} target=${TARGET} logdir=${out}"
 
-  # [1/6] Prerequisites check
-  echo "[1/6] Prerequisites check" | tee -a "${out}/log.txt"
+  # [1/4] Prepare
+  echo "[1/4] Prepare (prerequisites & baseline)" | tee -a "${out}/log.txt"
 
   # Check bun
   if ! command -v bun &> /dev/null; then
@@ -167,7 +167,6 @@ main() {
     exit 1
   fi
 
-  echo "[2/6] Baseline" | tee -a "${out}/log.txt"
   echo "OPENCODE_BIN: ${OPENCODE_BIN}" | tee -a "${out}/log.txt"
 
   local opencode_cmd=""
@@ -190,7 +189,7 @@ main() {
     echo "WARN: opencode command not found. Set OPENCODE_BIN or add opencode to PATH." | tee -a "${out}/log.txt"
   fi
 
-  echo "[3/6] Backup configs" | tee -a "${out}/log.txt"
+  echo "[2/4] Backup configs" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: cp -a ${OPENCODE_JSON} ${out}/opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
     echo "DRY: cp -a ${OMO_JSON} ${out}/oh-my-opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
@@ -210,9 +209,11 @@ main() {
     fi
   fi
 
-  echo "[4/6] Cache cleanup (optional)" | tee -a "${out}/log.txt"
+  echo "[3/4] Cache cleanup (optional)" | tee -a "${out}/log.txt"
   if [ -d "${OMO_CACHE}" ]; then
-    echo "Found cache dir: ${OMO_CACHE}" | tee -a "${out}/log.txt"
+    local cache_size=""
+    cache_size=$(du -sh "${OMO_CACHE}" 2>/dev/null | cut -f1)
+    echo "Found cache dir: ${OMO_CACHE} (${cache_size})" | tee -a "${out}/log.txt"
     if [ ${DRY_RUN} -eq 1 ]; then
       echo "DRY: rm -rf ${OMO_CACHE} (would ask confirmation)" | tee -a "${out}/log.txt"
     else
@@ -235,7 +236,9 @@ main() {
     for cache_path in "${opencode_plugin_cache_dir}"/oh-my-opencode*; do
       if [ -e "${cache_path}" ]; then
         found_cache=1
-        echo "Found opencode plugin cache: ${cache_path}" | tee -a "${out}/log.txt"
+        local cache_size=""
+        cache_size=$(du -sh "${cache_path}" 2>/dev/null | cut -f1)
+        echo "Found opencode plugin cache: ${cache_path} (${cache_size})" | tee -a "${out}/log.txt"
         if [ ${DRY_RUN} -eq 1 ]; then
           echo "DRY: rm -rf ${cache_path} (would ask confirmation)" | tee -a "${out}/log.txt"
         else
@@ -285,7 +288,7 @@ main() {
     echo "No opencode package.json: ${opencode_pkg_json}" | tee -a "${out}/log.txt"
   fi
 
-  echo "[5/6] Install/Upgrade" | tee -a "${out}/log.txt"
+  echo "[4/4] Install/Upgrade & Verify" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: (cd ${CONFIG_DIR} && npm install ${pkg} --save-exact)" | tee -a "${out}/log.txt"
     echo "DRY: fallback with --save-exact --ignore-scripts if postinstall hangs" | tee -a "${out}/log.txt"
@@ -329,7 +332,7 @@ main() {
     fi
   fi
 
-  echo "[6/6] Verify" | tee -a "${out}/log.txt"
+  # Verify installation
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode --version" | tee -a "${out}/log.txt"
     echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode doctor" | tee -a "${out}/log.txt"
