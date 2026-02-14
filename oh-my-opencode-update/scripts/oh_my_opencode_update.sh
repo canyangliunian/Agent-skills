@@ -135,8 +135,8 @@ main() {
 
   echo "[oh-my-opencode-update] mode=${MODE} target=${TARGET} logdir=${out}"
 
-  # [1/4] Prerequisites check
-  echo "[1/4] Prerequisites check" | tee -a "${out}/log.txt"
+  # [1/6] Prerequisites check
+  echo "[1/6] Prerequisites check" | tee -a "${out}/log.txt"
 
   # Check bun
   if ! command -v bun &> /dev/null; then
@@ -167,7 +167,7 @@ main() {
     exit 1
   fi
 
-  echo "[2/4] Baseline" | tee -a "${out}/log.txt"
+  echo "[2/6] Baseline" | tee -a "${out}/log.txt"
   echo "OPENCODE_BIN: ${OPENCODE_BIN}" | tee -a "${out}/log.txt"
 
   local opencode_cmd=""
@@ -190,7 +190,7 @@ main() {
     echo "WARN: opencode command not found. Set OPENCODE_BIN or add opencode to PATH." | tee -a "${out}/log.txt"
   fi
 
-  echo "[3/4] Backup configs" | tee -a "${out}/log.txt"
+  echo "[3/6] Backup configs" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: cp -a ${OPENCODE_JSON} ${out}/opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
     echo "DRY: cp -a ${OMO_JSON} ${out}/oh-my-opencode.json.${ts}.bak" | tee -a "${out}/log.txt"
@@ -210,23 +210,7 @@ main() {
     fi
   fi
 
-  echo "[4/7] Uninstall (gentle)" | tee -a "${out}/log.txt"
-  if [ ${DRY_RUN} -eq 1 ]; then
-    echo "DRY: (cd ${CONFIG_DIR} && npm uninstall oh-my-opencode)" | tee -a "${out}/log.txt"
-  else
-    set +e
-    (cd "${CONFIG_DIR}" && npm uninstall oh-my-opencode) 2>&1 | tee -a "${out}/log.txt"
-    local uninstall_rc=${PIPESTATUS[0]}
-    set -e
-
-    if [ ${uninstall_rc} -ne 0 ]; then
-      echo "WARN: npm uninstall failed (rc=${uninstall_rc})." | tee -a "${out}/log.txt"
-      echo "      This is often OK if the package was not installed yet." | tee -a "${out}/log.txt"
-      echo "      Continuing to installation step." | tee -a "${out}/log.txt"
-    fi
-  fi
-
-  echo "[5/7] Cache cleanup (optional)" | tee -a "${out}/log.txt"
+  echo "[4/6] Cache cleanup (optional)" | tee -a "${out}/log.txt"
   if [ -d "${OMO_CACHE}" ]; then
     echo "Found cache dir: ${OMO_CACHE}" | tee -a "${out}/log.txt"
     if [ ${DRY_RUN} -eq 1 ]; then
@@ -301,7 +285,7 @@ main() {
     echo "No opencode package.json: ${opencode_pkg_json}" | tee -a "${out}/log.txt"
   fi
 
-  echo "[6/7] Install/Upgrade" | tee -a "${out}/log.txt"
+  echo "[5/6] Install/Upgrade" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: (cd ${CONFIG_DIR} && npm install ${pkg} --save-exact)" | tee -a "${out}/log.txt"
     echo "DRY: fallback with --save-exact --ignore-scripts if postinstall hangs" | tee -a "${out}/log.txt"
@@ -345,7 +329,7 @@ main() {
     fi
   fi
 
-  echo "[4/4] Verify" | tee -a "${out}/log.txt"
+  echo "[6/6] Verify" | tee -a "${out}/log.txt"
   if [ ${DRY_RUN} -eq 1 ]; then
     echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode --version" | tee -a "${out}/log.txt"
     echo "DRY: node ${CONFIG_DIR}/node_modules/.bin/oh-my-opencode doctor" | tee -a "${out}/log.txt"
